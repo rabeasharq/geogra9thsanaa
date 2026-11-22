@@ -1,6 +1,12 @@
 import { QuizQuestion, ErrataRecord } from '../types/textbook';
+import {
+  MINISTERIAL_QUESTIONS,
+  MINISTERIAL_BATCH_STATS,
+  MINISTERIAL_TOPIC_FREQUENCY
+} from './ministerialQuestions';
+import { GENERATED_QUESTIONS } from './generatedQuestions';
 
-export const QUIZ_QUESTIONS: QuizQuestion[] = [
+export const CORE_TEXTBOOK_QUESTIONS: QuizQuestion[] = [
   // ================= UNIT 1 =================
   {
     id: 'q-u1-1',
@@ -527,6 +533,19 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     relatedLocationId: 'loc-tigris-euphrates'
   }
 ];
+
+export const QUIZ_QUESTIONS: QuizQuestion[] = [
+  ...CORE_TEXTBOOK_QUESTIONS.map((q) => ({ ...q, sourceCategory: 'textbook' as const })),
+  ...MINISTERIAL_QUESTIONS,
+  ...GENERATED_QUESTIONS
+];
+
+export {
+  MINISTERIAL_QUESTIONS,
+  MINISTERIAL_BATCH_STATS,
+  MINISTERIAL_TOPIC_FREQUENCY,
+  GENERATED_QUESTIONS
+};
 
 export const ERRATA_LOG: ErrataRecord[] = [
   {

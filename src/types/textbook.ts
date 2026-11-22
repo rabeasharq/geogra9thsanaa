@@ -146,12 +146,25 @@ export interface AtlasLocation {
   conceptIds: string[];
 }
 
+export type QuestionSourceCategory = 'textbook' | 'ministerial' | 'generated';
+
+export interface QuizMapVisual {
+  kind: 'yemen-point' | 'yemen-pipeline';
+  point1: { lat: number; lng: number };
+  point2?: { lat: number; lng: number };
+  activePoint: 1 | 2;
+  /** Optional custom end point when drawing oil export pipeline (Safer -> Red Sea) */
+  pipelineEnd?: { lat: number; lng: number };
+}
+
 export interface QuizQuestion {
   id: string;
   unitId: string;
   lessonId?: string;
   pageRef: string;
   sourceLabel: string;
+  sourceCategory?: QuestionSourceCategory;
+  examModels?: string[];
   type: QuestionType;
   cognitiveLevel: CognitiveLevel;
   prompt: string;
@@ -160,6 +173,7 @@ export interface QuizQuestion {
   matchingPairs?: { left: string; right: string }[];
   explanation: string;
   relatedLocationId?: string;
+  mapVisual?: QuizMapVisual;
 }
 
 export interface ErrataRecord {

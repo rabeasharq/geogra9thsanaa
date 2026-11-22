@@ -1,7 +1,15 @@
 import { UNIT_1_AND_2 } from './units1And2';
 import { UNIT_3_AND_4 } from './units3And4';
 import { ATLAS_LOCATIONS } from './atlasData';
-import { QUIZ_QUESTIONS, ERRATA_LOG } from './quizData';
+import {
+  QUIZ_QUESTIONS,
+  CORE_TEXTBOOK_QUESTIONS,
+  MINISTERIAL_QUESTIONS,
+  GENERATED_QUESTIONS,
+  MINISTERIAL_BATCH_STATS,
+  MINISTERIAL_TOPIC_FREQUENCY,
+  ERRATA_LOG
+} from './quizData';
 import { ConceptTerm, Lesson, Unit, AtlasLocation, QuizQuestion } from '../types/textbook';
 
 export const TEXTBOOK_UNITS: Unit[] = [...UNIT_1_AND_2, ...UNIT_3_AND_4];
@@ -139,4 +147,12 @@ export function searchBookContent(query: string): SearchHit[] {
 }
 
 export { ATLAS_LOCATIONS, projectYemen, projectArabWorld } from './atlasData';
-export { QUIZ_QUESTIONS, ERRATA_LOG };
+export {
+  QUIZ_QUESTIONS,
+  CORE_TEXTBOOK_QUESTIONS,
+  MINISTERIAL_QUESTIONS,
+  GENERATED_QUESTIONS,
+  MINISTERIAL_BATCH_STATS,
+  MINISTERIAL_TOPIC_FREQUENCY,
+  ERRATA_LOG
+};
