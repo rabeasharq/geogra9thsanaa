@@ -17,6 +17,7 @@ import { StudyGuidePortal } from './components/StudyGuidePortal';
 import { TrainingPortal } from './components/TrainingPortal';
 import { SearchAndBookmarksModal } from './components/SearchAndBookmarksModal';
 import { AuditReportView } from './components/AuditReportView';
+import { OfflineIndicator } from './components/PWAInstallButton';
 
 class PortalErrorBoundary extends React.Component<
   { children: React.ReactNode; onReset: () => void },
@@ -292,6 +293,8 @@ export default function App() {
         onOpenAudit={() => handleSelectPortal('audit')}
         onResetProgress={resetProgress}
       />
+
+      <OfflineIndicator />
     </div>
   );
 }

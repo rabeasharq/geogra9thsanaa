@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PortalId } from '../types/textbook';
 import { Search, Menu, X } from 'lucide-react';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface TopNavProps {
   activePortal: PortalId;
@@ -62,15 +63,18 @@ export const TopNav: React.FC<TopNavProps> = ({
           })}
         </nav>
 
-        {/* Zone 3: Single primary action + mobile menu button */}
+        {/* Zone 3: Primary actions + mobile menu button */}
         <div className="flex shrink-0 items-center gap-2">
+          <PWAInstallButton compact />
+
           <button
             type="button"
             onClick={onOpenSearch}
-            className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600"
+            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:gap-2 sm:px-3.5"
           >
             <Search className="h-3.5 w-3.5" />
-            <span>البحث والمفضلة</span>
+            <span className="hidden sm:inline">البحث والمفضلة</span>
+            <span className="sm:hidden">بحث</span>
           </button>
 
           <button

@@ -21,6 +21,7 @@ import {
   PenTool,
   Phone
 } from 'lucide-react';
+import { PWAOfflineStatusCard } from './PWAInstallButton';
 
 interface HomePortalProps {
   progress: StudentProgress;
@@ -210,6 +211,9 @@ export const HomePortal: React.FC<HomePortalProps> = ({
           </button>
         </div>
       </section>
+
+      {/* Installable PWA & Full Offline Readiness Banner */}
+      <PWAOfflineStatusCard />
 
       {/* Four Main Portals */}
       <section aria-labelledby="portals-heading">

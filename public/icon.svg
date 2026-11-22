@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0369a1" />
+      <stop offset="100%" stop-color="#0f766e" />
+    </linearGradient>
+    <linearGradient id="land" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)" />
+  <circle cx="256" cy="256" r="158" fill="#0284c7" stroke="#bae6fd" stroke-width="10" />
+  <!-- Latitude & Longitude lines -->
+  <ellipse cx="256" cy="256" rx="78" ry="158" fill="none" stroke="#bae6fd" stroke-width="5" opacity="0.65" />
+  <line x1="98" y1="256" x2="414" y2="256" stroke="#bae6fd" stroke-width="5" opacity="0.65" />
+  <line x1="120" y1="184" x2="392" y2="184" stroke="#bae6fd" stroke-width="4" opacity="0.55" />
+  <line x1="120" y1="328" x2="392" y2="328" stroke="#bae6fd" stroke-width="4" opacity="0.55" />
+  <!-- Stylized Arabian Peninsula / Yemen landmass & mountain peak -->
+  <path d="M210,165 L285,152 L322,208 L338,266 L296,306 L236,318 L194,280 L196,210 Z" fill="url(#land)" stroke="#ffffff" stroke-width="6" stroke-linejoin="round" />
+  <!-- Compass needle / location pin -->
+  <polygon points="256,118 272,162 256,152 240,162" fill="#ffffff" />
+  <!-- Open book base accent -->
+  <path d="M168,368 Q212,350 256,372 Q300,350 344,368 L344,394 Q300,376 256,398 Q212,376 168,394 Z" fill="#ffffff" />
+</svg>
