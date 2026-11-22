@@ -605,12 +605,15 @@ const MiniYemenMapQuizVisual: React.FC<{ mapVisual: QuizMapVisual }> = ({ mapVis
         </defs>
         <rect x="0" y="0" width="1000" height="590" fill="url(#quizOcean)" />
 
-        {/* Subtle Neighboring landmass */}
+        {/* Neighboring Arabian Peninsula Landmass (North & East borders of Yemen) */}
         <path
-          d="M 40,40 L 960,40 L 960,260 L 790,340 L 140,340 L 110,160 Z"
+          d="M 0,0 L 1000,0 L 1000,150 L 950,164 L 879,203 L 796,229 L 725,73 L 404,79 L 243,177 L 159,170 L 134,242 L 75,110 L 40,0 Z"
           fill="#f1f5f9"
-          opacity="0.45"
+          stroke="#cbd5e1"
+          strokeWidth="1.5"
+          opacity="0.82"
         />
+        <line x1="725" y1="73" x2="757" y2="40" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="6 4" />
 
         {/* Yemen Mainland Blank Silhouette */}
         <polygon

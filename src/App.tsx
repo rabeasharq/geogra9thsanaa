@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { PortalId, BookmarkItem, AtlasScope } from './types/textbook';
 import { getLessonById, getUnitById, SearchHit } from './data/bookIndex';
 import { useStudentProgress } from './hooks/useStudentProgress';
+import { useReadingPreferences } from './hooks/useReadingPreferences';
 import { TopNav } from './components/TopNav';
 import { BreadcrumbBar } from './components/BreadcrumbBar';
 import { HomePortal } from './components/HomePortal';
@@ -70,6 +71,16 @@ export default function App() {
     recordQuizAnswer,
     resetProgress
   } = useStudentProgress();
+
+  const {
+    themeMode,
+    fontScale,
+    setThemeMode,
+    setFontScale,
+    increaseFont,
+    decreaseFont,
+    resetPrefs
+  } = useReadingPreferences();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [trainingFilter, setTrainingFilter] = useState<{ unitId?: string; lessonId?: string }>({});
@@ -159,6 +170,13 @@ export default function App() {
         activePortal={activePortal}
         onSelectPortal={handleSelectPortal}
         onOpenSearch={() => setSearchOpen(true)}
+        themeMode={themeMode}
+        fontScale={fontScale}
+        onChangeThemeMode={setThemeMode}
+        onChangeFontScale={setFontScale}
+        onIncreaseFont={increaseFont}
+        onDecreaseFont={decreaseFont}
+        onResetDisplayPrefs={resetPrefs}
       />
 
       <BreadcrumbBar

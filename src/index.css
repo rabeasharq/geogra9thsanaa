@@ -11,6 +11,7 @@
     direction: rtl;
     font-family: var(--font-body);
     scroll-behavior: smooth;
+    transition: background-color 180ms ease, color 180ms ease;
   }
 
   h1, h2, h3, h4, .font-display {
@@ -23,6 +24,210 @@
   }
 }
 
+/* ==================== READING MODE (WARM PAPER / SEPIA) ==================== */
+html[data-theme="reading"] body {
+  background-color: #f3ead8 !important;
+  color: #241b12 !important;
+}
+
+html[data-theme="reading"] .bg-slate-50 {
+  background-color: #f3ead8 !important;
+}
+
+html[data-theme="reading"] .bg-white,
+html[data-theme="reading"] .bg-white\/95 {
+  background-color: #fbf5e9 !important;
+}
+
+html[data-theme="reading"] .bg-slate-50\/60,
+html[data-theme="reading"] .bg-slate-50\/70,
+html[data-theme="reading"] .bg-slate-100 {
+  background-color: #efe4ce !important;
+}
+
+html[data-theme="reading"] .border-slate-100,
+html[data-theme="reading"] .border-slate-200,
+html[data-theme="reading"] .border-slate-300 {
+  border-color: #dfd0b4 !important;
+}
+
+html[data-theme="reading"] .text-slate-900 {
+  color: #231910 !important;
+}
+html[data-theme="reading"] .text-slate-800 {
+  color: #342618 !important;
+}
+html[data-theme="reading"] .text-slate-700 {
+  color: #493725 !important;
+}
+html[data-theme="reading"] .text-slate-600 {
+  color: #5f4a34 !important;
+}
+html[data-theme="reading"] .text-slate-500 {
+  color: #776048 !important;
+}
+
+html[data-theme="reading"] p,
+html[data-theme="reading"] li {
+  line-height: 1.9;
+}
+
+html[data-theme="reading"] input,
+html[data-theme="reading"] select,
+html[data-theme="reading"] textarea {
+  background-color: #fffaf0 !important;
+  border-color: #d6c4a4 !important;
+  color: #231910 !important;
+}
+
+/* ==================== NIGHT MODE (DEEP SLATE DARK) ==================== */
+html[data-theme="night"] body {
+  background-color: #0b1120 !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="night"] .bg-slate-50 {
+  background-color: #0b1120 !important;
+}
+
+html[data-theme="night"] .bg-white,
+html[data-theme="night"] .bg-white\/95 {
+  background-color: #131c31 !important;
+}
+
+html[data-theme="night"] .bg-slate-50\/60,
+html[data-theme="night"] .bg-slate-50\/70,
+html[data-theme="night"] .bg-slate-100 {
+  background-color: #1b2742 !important;
+}
+
+html[data-theme="night"] .bg-slate-200 {
+  background-color: #263554 !important;
+}
+
+html[data-theme="night"] .hover\:bg-slate-50:hover,
+html[data-theme="night"] .hover\:bg-slate-100:hover {
+  background-color: #22304f !important;
+}
+
+html[data-theme="night"] .border-slate-100,
+html[data-theme="night"] .border-slate-200,
+html[data-theme="night"] .border-slate-300 {
+  border-color: #283858 !important;
+}
+
+html[data-theme="night"] .divide-slate-100 > :not(:last-child) {
+  border-color: #263554 !important;
+}
+
+html[data-theme="night"] .text-slate-900 {
+  color: #f8fafc !important;
+}
+html[data-theme="night"] .text-slate-800 {
+  color: #e2e8f0 !important;
+}
+html[data-theme="night"] .text-slate-700 {
+  color: #cbd5e1 !important;
+}
+html[data-theme="night"] .text-slate-600 {
+  color: #94a3b8 !important;
+}
+html[data-theme="night"] .text-slate-500 {
+  color: #8193ad !important;
+}
+
+/* Soft contextual cards in Night Mode */
+html[data-theme="night"] .bg-sky-50,
+html[data-theme="night"] .bg-sky-50\/70,
+html[data-theme="night"] .bg-sky-50\/80 {
+  background-color: rgba(14, 116, 144, 0.2) !important;
+}
+html[data-theme="night"] .bg-sky-100,
+html[data-theme="night"] .bg-sky-100\/70 {
+  background-color: rgba(14, 116, 144, 0.3) !important;
+}
+html[data-theme="night"] .border-sky-200 {
+  border-color: rgba(56, 189, 248, 0.35) !important;
+}
+html[data-theme="night"] .text-sky-700,
+html[data-theme="night"] .text-sky-800,
+html[data-theme="night"] .text-sky-900,
+html[data-theme="night"] .text-sky-950 {
+  color: #7dd3fc !important;
+}
+
+html[data-theme="night"] .bg-emerald-50,
+html[data-theme="night"] .bg-emerald-50\/70 {
+  background-color: rgba(5, 150, 105, 0.18) !important;
+}
+html[data-theme="night"] .border-emerald-200,
+html[data-theme="night"] .border-emerald-300 {
+  border-color: rgba(52, 211, 153, 0.38) !important;
+}
+html[data-theme="night"] .text-emerald-700,
+html[data-theme="night"] .text-emerald-800,
+html[data-theme="night"] .text-emerald-900,
+html[data-theme="night"] .text-emerald-950 {
+  color: #6ee7b7 !important;
+}
+
+html[data-theme="night"] .bg-amber-50,
+html[data-theme="night"] .bg-amber-50\/40 {
+  background-color: rgba(217, 119, 6, 0.18) !important;
+}
+html[data-theme="night"] .bg-amber-100 {
+  background-color: rgba(217, 119, 6, 0.28) !important;
+}
+html[data-theme="night"] .border-amber-200,
+html[data-theme="night"] .border-amber-300 {
+  border-color: rgba(251, 191, 36, 0.35) !important;
+}
+html[data-theme="night"] .text-amber-700,
+html[data-theme="night"] .text-amber-800,
+html[data-theme="night"] .text-amber-900,
+html[data-theme="night"] .text-amber-950 {
+  color: #fde68a !important;
+}
+
+html[data-theme="night"] .bg-indigo-50 {
+  background-color: rgba(79, 70, 229, 0.22) !important;
+}
+html[data-theme="night"] .border-indigo-200,
+html[data-theme="night"] .border-indigo-300 {
+  border-color: rgba(129, 140, 248, 0.38) !important;
+}
+html[data-theme="night"] .text-indigo-700,
+html[data-theme="night"] .text-indigo-800 {
+  color: #c7d2fe !important;
+}
+
+html[data-theme="night"] .bg-rose-50 {
+  background-color: rgba(225, 29, 72, 0.2) !important;
+}
+html[data-theme="night"] .border-rose-200,
+html[data-theme="night"] .border-rose-400 {
+  border-color: rgba(251, 113, 133, 0.45) !important;
+}
+html[data-theme="night"] .text-rose-700,
+html[data-theme="night"] .text-rose-800,
+html[data-theme="night"] .text-rose-900 {
+  color: #fecdd3 !important;
+}
+
+html[data-theme="night"] input,
+html[data-theme="night"] select,
+html[data-theme="night"] textarea {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Keep SVG cartographic text unaffected by dark text overrides */
+html[data-theme="night"] svg text,
+html[data-theme="reading"] svg text {
+  line-height: normal;
+}
+
 /* Custom subtle scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
@@ -33,9 +238,17 @@
   background: #f1f5f9;
 }
 
+html[data-theme="night"] ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 9999px;
+}
+
+html[data-theme="night"] ::-webkit-scrollbar-thumb {
+  background: #334155;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -47,6 +260,10 @@
   @page {
     size: A4 portrait;
     margin: 16mm 14mm;
+  }
+
+  html {
+    font-size: 100% !important;
   }
 
   body {

@@ -678,13 +678,14 @@ export const YemenSvgMap: React.FC<{
       {/* Ocean Base */}
       <rect x="0" y="0" width="1000" height="600" fill="url(#yemenOceanGrad)" />
 
-      {/* Neighboring Landmass (Saudi Arabia & Oman) in crisp neutral cartographic stone */}
+      {/* Neighboring Landmass (Saudi Arabia & Oman) aligned to Yemen's borders */}
       <path
-        d="M 50,40 L 950,40 L 950,240 L 795,226 L 600,72 L 155,175 Z"
+        d="M 50,40 L 950,40 L 950,164 L 879,203 L 796,229 L 725,73 L 404,79 L 243,177 L 159,170 L 134,242 L 75,110 Z"
         fill="#f1f5f9"
         stroke="#cbd5e1"
         strokeWidth="1"
       />
+      <line x1="725" y1="73" x2="757" y2="40" stroke="#94a3b8" strokeWidth="1.2" strokeDasharray="4 4" />
 
       {/* Graticule Lines */}
       {[12, 14, 16, 18].map((lat) => {

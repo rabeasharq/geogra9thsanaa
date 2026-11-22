@@ -635,11 +635,25 @@ export const MapDrawingLab: React.FC<MapDrawingLabProps> = ({ initialScope, onGo
                 </div>
               )}
 
+              {template.id === 'map-yemen-location' && (
+                <div className="rounded-lg border border-sky-200 bg-sky-50/70 px-3.5 py-2 text-xs text-sky-950">
+                  تنبيه منهجي: هذه الخريطة تمثل <strong>حدود الجمهورية اليمنية (ص 9)</strong>؛ وتظهر أراضي الجوار شمالاً (السعودية) وشرقاً (عُمان) باللون الرمادي المحايد فقط لتحديد حدود اليمن البرية، وليست اختباراً خارجياً منفصلاً.
+                </div>
+              )}
+
               {/* Blank Map with Clickable Target Circles */}
               <svg viewBox="0 0 1000 600" className="h-auto w-full rounded-lg border border-slate-200 bg-sky-50">
                 <rect x="0" y="0" width="1000" height="600" fill="#bae6fd" />
                 {template.scope === 'yemen' ? (
                   <>
+                    {/* Neighboring Arabian Peninsula Landmass (North & East borders of Yemen) */}
+                    <path
+                      d="M 50,40 L 950,40 L 950,164 L 879,203 L 796,229 L 725,73 L 404,79 L 243,177 L 159,170 L 134,242 L 75,110 Z"
+                      fill="#f1f5f9"
+                      stroke="#cbd5e1"
+                      strokeWidth="1.2"
+                    />
+                    <line x1="725" y1="73" x2="757" y2="40" stroke="#94a3b8" strokeWidth="1.2" strokeDasharray="4 4" />
                     <polygon points={YEMEN_OUTLINE_PTS} fill="#ecfdf5" stroke="#065f46" strokeWidth="2" />
                     <polygon points={SOCOTRA_OUTLINE_PTS} fill="#ecfdf5" stroke="#065f46" strokeWidth="1.8" />
                   </>
@@ -838,10 +852,11 @@ const DetailedTextbookMapSvg: React.FC<{
       {template.scope === 'yemen' ? (
         <>
           <path
-            d="M 50,40 L 950,40 L 950,240 L 795,226 L 600,72 L 155,175 Z"
+            d="M 50,40 L 950,40 L 950,164 L 879,203 L 796,229 L 725,73 L 404,79 L 243,177 L 159,170 L 134,242 L 75,110 Z"
             fill="#f1f5f9"
             stroke="#cbd5e1"
           />
+          <line x1="725" y1="73" x2="757" y2="40" stroke="#94a3b8" strokeWidth="1.2" strokeDasharray="4 4" />
           {[12, 14, 16, 18].map((lat) => {
             const p = projectYemen(lat, 42);
             return (
