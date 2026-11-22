@@ -246,15 +246,21 @@ export default function App() {
             <div>
               كتاب الجغرافيا التفاعلي للصف التاسع الأساسي – الجمهورية اليمنية – طبعة 2026 (مستند إلى الكتاب المدرسي الرسمي 1444هـ / 2023م)
             </div>
-            <div className="font-medium text-slate-800">
-              للتواصل والدعم: <span className="font-bold">الأستاذ إبراهيم أحمد متاش</span> ·{' '}
-              <a
-                href="tel:779424090"
-                dir="ltr"
-                className="font-mono font-bold tabular-nums text-sky-700 hover:underline"
-              >
-                779424090
-              </a>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-medium text-slate-800">
+              <span>
+                للتواصل والدعم: <span className="font-bold">الأستاذ إبراهيم أحمد متاش</span> ·{' '}
+                <a
+                  href="tel:779424090"
+                  dir="ltr"
+                  className="font-mono font-bold tabular-nums text-sky-700 hover:underline"
+                >
+                  779424090
+                </a>
+              </span>
+              <span className="text-slate-300">|</span>
+              <span>
+                المراجع: <span className="font-bold">الأستاذ مجدي عبدالله النوفاني</span>
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-4">

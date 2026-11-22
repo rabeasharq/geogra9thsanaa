@@ -327,17 +327,30 @@ export const HomePortal: React.FC<HomePortalProps> = ({
         </div>
       </section>
 
-      {/* Author / Support Credit Strip */}
+      {/* Author, Reviewer & Support Credit Strip */}
       <section className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5">
-        <div>
-          <div className="text-xs font-semibold text-sky-700">التواصل والدعم التربوي والتقني</div>
-          <div className="font-display mt-1 text-base font-bold text-slate-900">
-            الأستاذ إبراهيم أحمد متاش
+        <div className="grid gap-4 sm:grid-cols-2 sm:gap-8">
+          <div>
+            <div className="text-xs font-semibold text-sky-700">التواصل والدعم التربوي والتقني</div>
+            <div className="font-display mt-1 text-base font-bold text-slate-900">
+              الأستاذ إبراهيم أحمد متاش
+            </div>
+            <p className="mt-0.5 text-xs text-slate-600">
+              للتواصل والاستفسارات التربوية والدعم الفني الخاص بالكتاب التفاعلي للصف التاسع الأساسي
+            </p>
           </div>
-          <p className="mt-0.5 text-xs text-slate-600">
-            للتواصل والاستفسارات التربوية والدعم الفني الخاص بالكتاب التفاعلي للصف التاسع الأساسي
-          </p>
+
+          <div className="border-slate-100 sm:border-r sm:pr-6">
+            <div className="text-xs font-semibold text-emerald-700">المراجعة والتدقيق</div>
+            <div className="font-display mt-1 text-base font-bold text-slate-900">
+              الأستاذ مجدي عبدالله النوفاني
+            </div>
+            <p className="mt-0.5 text-xs text-slate-600">
+              مراجع المحتوى التعليمي والجغرافي للكتاب التفاعلي
+            </p>
+          </div>
         </div>
+
         <a
           href="tel:779424090"
           dir="ltr"
