@@ -282,7 +282,7 @@ export default function App() {
               </span>
               <span className="text-slate-300">|</span>
               <span>
-                المراجع: <span className="font-bold">الأستاذ مجدي عبدالله النوفاني</span>
+                المراجع: <span className="font-bold">الأستاذ مجدي محمد النوفاني</span>
               </span>
             </div>
           </div>

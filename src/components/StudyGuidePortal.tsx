@@ -30,6 +30,7 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   const [activeTab, setActiveTab] = useState<StudyTab>(initialTab || 'summary');
   const [unitFilter, setUnitFilter] = useState<string>(initialUnitId || 'all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [tableSearch, setTableSearch] = useState('');
   const [expandedTableNotes, setExpandedTableNotes] = useState<Record<string, boolean>>({});
 
   React.useEffect(() => {
@@ -57,20 +58,30 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   }, [unitFilter, searchTerm]);
 
   const allTables = useMemo(() => {
-    return filteredUnits.flatMap((u) =>
-      u.lessons.flatMap((l) =>
-        l.sections.flatMap((s) =>
-          (s.tables ?? []).map((t) => ({
-            ...t,
-            unitId: u.id,
-            unitNumber: u.unitNumber,
-            lessonId: l.id,
-            lessonTitle: l.title
-          }))
+    const q = tableSearch.trim().toLowerCase();
+    return filteredUnits
+      .flatMap((u) =>
+        u.lessons.flatMap((l) =>
+          l.sections.flatMap((s) =>
+            (s.tables ?? []).map((t) => ({
+              ...t,
+              unitId: u.id,
+              unitNumber: u.unitNumber,
+              lessonId: l.id,
+              lessonTitle: l.title
+            }))
+          )
         )
       )
-    );
-  }, [filteredUnits]);
+      .filter((t) => {
+        if (!q) return true;
+        return (
+          t.title.toLowerCase().includes(q) ||
+          t.lessonTitle.toLowerCase().includes(q) ||
+          t.rows.some((r) => r.some((cell) => cell.toLowerCase().includes(q)))
+        );
+      });
+  }, [filteredUnits, tableSearch]);
 
   const allFormulas = useMemo(() => {
     return filteredUnits.flatMap((u) =>
@@ -89,10 +100,18 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   }, [filteredUnits]);
 
   const filteredMinisterialTables = useMemo(() => {
-    return unitFilter === 'all'
-      ? MINISTERIAL_COMPARATIVE_TABLES
-      : MINISTERIAL_COMPARATIVE_TABLES.filter((t) => t.unitId === unitFilter);
-  }, [unitFilter]);
+    const q = tableSearch.trim().toLowerCase();
+    return MINISTERIAL_COMPARATIVE_TABLES.filter((t) => {
+      const unitOk = unitFilter === 'all' || t.unitId === unitFilter;
+      if (!unitOk) return false;
+      if (!q) return true;
+      return (
+        t.title.toLowerCase().includes(q) ||
+        t.focusTip.toLowerCase().includes(q) ||
+        t.rows.some((r) => r.some((cell) => cell.toLowerCase().includes(q)))
+      );
+    });
+  }, [unitFilter, tableSearch]);
 
   const handlePrintPdf = () => {
     window.print();
@@ -348,23 +367,35 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
         <div className="space-y-8">
           {/* High-Focus Ministerial Comparative Tables */}
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
-              <div>
-                <h2 className="font-display text-base font-extrabold text-slate-900">
-                  جداول المقارنات المركّزة من واقع الأسئلة الوزارية ({filteredMinisterialTables.length} جدولاً)
-                </h2>
-                <p className="mt-1 text-xs text-slate-700">
-                  جداول مصممة لربط أوجه المقارنة المتكررة في الامتحانات الوزارية مع مواضع أسئلتها وتنبيهات عدم الخلط.
-                </p>
+            <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-base font-extrabold text-slate-900">
+                    جداول المقارنات والربط بالمحافظات والدول ({filteredMinisterialTables.length} جدولاً)
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-700">
+                    كل معلم، جبل، وادٍ، ميناء، محمية، معدن، نهر وبحيرة مربوط 1-إلى-1 بمحافظته أو دولته لمنع الخلط الامتحاني.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('disambiguation')}
+                  className="no-print inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                >
+                  <ArrowLeftRight className="h-3.5 w-3.5" />
+                  <span>تدريب التخيير بين المتشابهات</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setActiveTab('disambiguation')}
-                className="no-print inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800"
-              >
-                <ArrowLeftRight className="h-3.5 w-3.5" />
-                <span>تدريب التخيير بين المتشابهات</span>
-              </button>
+              <div className="no-print relative">
+                <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  value={tableSearch}
+                  onChange={(e) => setTableSearch(e.target.value)}
+                  placeholder="ابحث في الجداول باسم المعلم أو المحافظة أو الدولة (مثال: عدن، شهارة، حضرموت، الغدير، تدمر، الفوسفات)..."
+                  className="w-full rounded-lg border border-amber-200 bg-white py-2 pl-3 pr-9 text-xs text-slate-800 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none"
+                />
+              </div>
             </div>
 
             {filteredMinisterialTables.map((ct) => {

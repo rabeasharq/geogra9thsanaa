@@ -1,25 +1,61 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0369a1" />
-      <stop offset="100%" stop-color="#0f766e" />
+    <linearGradient id="seaBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="55%" stop-color="#0369a1" />
+      <stop offset="100%" stop-color="#0c4a6e" />
     </linearGradient>
-    <linearGradient id="land" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fde68a" />
+    <linearGradient id="arabLand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#bbf7d0" />
+      <stop offset="55%" stop-color="#86efac" />
+      <stop offset="100%" stop-color="#fde68a" />
+    </linearGradient>
+    <linearGradient id="yemenAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
       <stop offset="100%" stop-color="#f59e0b" />
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="96" fill="url(#bg)" />
-  <circle cx="256" cy="256" r="158" fill="#0284c7" stroke="#bae6fd" stroke-width="10" />
-  <!-- Latitude & Longitude lines -->
-  <ellipse cx="256" cy="256" rx="78" ry="158" fill="none" stroke="#bae6fd" stroke-width="5" opacity="0.65" />
-  <line x1="98" y1="256" x2="414" y2="256" stroke="#bae6fd" stroke-width="5" opacity="0.65" />
-  <line x1="120" y1="184" x2="392" y2="184" stroke="#bae6fd" stroke-width="4" opacity="0.55" />
-  <line x1="120" y1="328" x2="392" y2="328" stroke="#bae6fd" stroke-width="4" opacity="0.55" />
-  <!-- Stylized Arabian Peninsula / Yemen landmass & mountain peak -->
-  <path d="M210,165 L285,152 L322,208 L338,266 L296,306 L236,318 L194,280 L196,210 Z" fill="url(#land)" stroke="#ffffff" stroke-width="6" stroke-linejoin="round" />
-  <!-- Compass needle / location pin -->
-  <polygon points="256,118 272,162 256,152 240,162" fill="#ffffff" />
-  <!-- Open book base accent -->
-  <path d="M168,368 Q212,350 256,372 Q300,350 344,368 L344,394 Q300,376 256,398 Q212,376 168,394 Z" fill="#ffffff" />
+
+  <!-- Rounded Map Frame -->
+  <rect width="512" height="512" rx="104" fill="url(#seaBg)" />
+  <rect x="18" y="18" width="476" height="476" rx="88" fill="none" stroke="#7dd3fc" stroke-opacity="0.35" stroke-width="3" />
+
+  <!-- Subtle Cartographic Graticule -->
+  <g stroke="#bae6fd" stroke-opacity="0.2" stroke-width="1.5" stroke-dasharray="6 6">
+    <line x1="34" y1="190" x2="478" y2="190" />
+    <line x1="34" y1="256" x2="478" y2="256" />
+    <line x1="34" y1="322" x2="478" y2="322" />
+    <line x1="150" y1="96" x2="150" y2="416" />
+    <line x1="256" y1="96" x2="256" y2="416" />
+    <line x1="362" y1="96" x2="362" y2="416" />
+  </g>
+
+  <!-- Coastal Shelf Glow -->
+  <polygon points="102.9,133.7 130.2,134.4 150.7,127.1 178.0,126.5 189.4,123.9 194.0,127.1 195.1,140.3 191.1,146.8 208.8,152.7 219.6,156.6 228.1,163.8 245.2,169.7 248.0,157.9 261.1,152.7 276.5,161.9 303.8,163.8 310.6,161.2 317.5,163.2 328.3,163.2 332.3,175.0 328.9,185.5 318.6,172.4 326.0,190.1 335.7,211.7 343.1,224.1 345.4,239.9 352.8,250.4 342.0,266.7 341.4,275.3 380.1,286.4 379.0,292.3 381.2,294.3 389.8,300.2 409.7,294.9 425.6,290.3 426.2,300.2 408.6,335.6 391.5,355.2 375.5,371.0 369.8,378.8 372.1,342.1 355.6,338.8 327.7,306.1 270.2,306.1 264.5,265.4 270.2,240.5 275.9,224.1 219.0,217.6 201.4,243.2 162.1,204.5 106.3,189.4 102.3,266.1 64.2,272.0 39.7,262.8 36.8,232.0 51.1,197.3 79.0,169.1 90.4,148.1" fill="none" stroke="#e0f2fe" stroke-opacity="0.42" stroke-width="10" stroke-linejoin="round" />
+  <polygon points="328.3,163.2 333.4,152.7 337.4,142.9 337.4,135.7 341.4,127.1 355.6,125.2 374.4,124.5 396.0,137.6 402.3,155.3 409.7,171.7 406.8,175.6 409.1,181.5 419.4,196.0 426.8,202.5 425.1,197.3 427.3,209.7 443.3,207.8 449.0,202.5 454.7,196.0 455.8,207.8 467.2,213.7 474.0,220.9 468.9,234.0 441.6,256.9 430.8,262.2 413.1,273.3 389.8,284.4 380.8,285.2 378.1,271.3 375.5,257.6 356.8,227.4 350.5,210.4 333.4,184.8 332.8,175.0" fill="none" stroke="#e0f2fe" stroke-opacity="0.42" stroke-width="10" stroke-linejoin="round" />
+
+  <!-- Real Arab World Landmass (African & Asian Wings) -->
+  <polygon points="102.9,133.7 130.2,134.4 150.7,127.1 178.0,126.5 189.4,123.9 194.0,127.1 195.1,140.3 191.1,146.8 208.8,152.7 219.6,156.6 228.1,163.8 245.2,169.7 248.0,157.9 261.1,152.7 276.5,161.9 303.8,163.8 310.6,161.2 317.5,163.2 328.3,163.2 332.3,175.0 328.9,185.5 318.6,172.4 326.0,190.1 335.7,211.7 343.1,224.1 345.4,239.9 352.8,250.4 342.0,266.7 341.4,275.3 380.1,286.4 379.0,292.3 381.2,294.3 389.8,300.2 409.7,294.9 425.6,290.3 426.2,300.2 408.6,335.6 391.5,355.2 375.5,371.0 369.8,378.8 372.1,342.1 355.6,338.8 327.7,306.1 270.2,306.1 264.5,265.4 270.2,240.5 275.9,224.1 219.0,217.6 201.4,243.2 162.1,204.5 106.3,189.4 102.3,266.1 64.2,272.0 39.7,262.8 36.8,232.0 51.1,197.3 79.0,169.1 90.4,148.1" fill="url(#arabLand)" stroke="#065f46" stroke-width="3" stroke-linejoin="round" />
+  <polygon points="328.3,163.2 333.4,152.7 337.4,142.9 337.4,135.7 341.4,127.1 355.6,125.2 374.4,124.5 396.0,137.6 402.3,155.3 409.7,171.7 406.8,175.6 409.1,181.5 419.4,196.0 426.8,202.5 425.1,197.3 427.3,209.7 443.3,207.8 449.0,202.5 454.7,196.0 455.8,207.8 467.2,213.7 474.0,220.9 468.9,234.0 441.6,256.9 430.8,262.2 413.1,273.3 389.8,284.4 380.8,285.2 378.1,271.3 375.5,257.6 356.8,227.4 350.5,210.4 333.4,184.8 332.8,175.0" fill="url(#arabLand)" stroke="#065f46" stroke-width="3" stroke-linejoin="round" />
+
+  <!-- Yemen Highlight & Socotra -->
+  <polygon points="377.2,260.8 379.5,253.6 386.9,254.3 401.2,244.5 429.6,243.8 435.9,259.5 430.2,266.1 413.7,273.3 400.0,279.9 389.8,284.4 380.8,285.2 379.8,281.2 378.1,271.3 377.2,264.8" fill="url(#yemenAccent)" stroke="#92400e" stroke-width="2.2" stroke-linejoin="round" />
+  <polygon points="437.0,285.1 443.6,285.4 443.0,287.4 437.6,287.6" fill="#fbbf24" stroke="#92400e" stroke-width="1.8" />
+
+  <!-- Comoros Islands Accent (Indian Ocean south) -->
+  <circle cx="388" cy="422" r="6" fill="#86efac" stroke="#ffffff" stroke-width="2" />
+  <circle cx="404" cy="428" r="4.5" fill="#86efac" stroke="#ffffff" stroke-width="1.5" />
+  <rect x="372" y="406" width="48" height="34" rx="6" fill="none" stroke="#bae6fd" stroke-opacity="0.65" stroke-width="1.8" />
+
+  <!-- Major Arab Rivers: Nile, Tigris, Euphrates -->
+  <path d="M 311.2,163.2 L 311.2,173.0 L 319.2,199.9 L 315.8,220.9 L 318.6,266.1 L 314.6,302.8" fill="none" stroke="#0284c7" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M 372.7,125.8 L 382.9,142.2 L 386.4,150.1 L 406.8,168.4" fill="none" stroke="#0284c7" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M 350.5,127.1 L 361.9,137.0 L 380.7,148.8 L 406.8,168.4" fill="none" stroke="#0284c7" stroke-width="2.4" stroke-linecap="round" />
+
+  <!-- Compass Rose Top-Right / Top-Left -->
+  <g transform="translate(432, 84)">
+    <circle r="26" fill="#ffffff" fill-opacity="0.92" stroke="#0c4a6e" stroke-width="2" />
+    <polygon points="0,-19 5,0 0,-4 -5,0" fill="#e11d48" />
+    <polygon points="0,19 5,0 0,4 -5,0" fill="#334155" />
+  </g>
 </svg>

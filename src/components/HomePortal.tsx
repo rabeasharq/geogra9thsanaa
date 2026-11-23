@@ -343,7 +343,7 @@ export const HomePortal: React.FC<HomePortalProps> = ({
           <div className="border-slate-100 sm:border-r sm:pr-6">
             <div className="text-xs font-semibold text-emerald-700">المراجعة والتدقيق</div>
             <div className="font-display mt-1 text-base font-bold text-slate-900">
-              الأستاذ مجدي عبدالله النوفاني
+              الأستاذ مجدي محمد النوفاني
             </div>
             <p className="mt-0.5 text-xs text-slate-600">
               مراجع المحتوى التعليمي والجغرافي للكتاب التفاعلي

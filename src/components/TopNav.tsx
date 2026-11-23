@@ -106,13 +106,20 @@ export const TopNav: React.FC<TopNavProps> = ({
   return (
     <header className="no-print sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
-        {/* Zone 1: Brand Wordmark */}
+        {/* Zone 1: Brand Icon (Real Arab World Map) & Wordmark */}
         <button
           type="button"
           onClick={() => handleNavClick('home')}
-          className="font-display shrink-0 whitespace-nowrap text-base font-bold tracking-tight text-slate-900 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-sky-600 sm:text-lg"
+          className="flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-lg py-1 text-slate-900 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-sky-600"
         >
-          الجغرافيا التفاعلية
+          <img
+            src="/icon.svg"
+            alt="أيقونة خارطة الوطن العربي"
+            className="h-8 w-8 shrink-0 rounded-lg border border-sky-200/80 shadow-xs"
+          />
+          <span className="font-display text-base font-bold tracking-tight sm:text-lg">
+            الجغرافيا التفاعلية
+          </span>
         </button>
 
         {/* Zone 2: Primary navigation links (desktop) */}
