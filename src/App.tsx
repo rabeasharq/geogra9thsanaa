@@ -14,7 +14,7 @@ import { HomePortal } from './components/HomePortal';
 import { UnitsPortal } from './components/UnitsPortal';
 import { AtlasPortal } from './components/AtlasPortal';
 import { MapDrawingLab } from './components/MapDrawingLab';
-import { StudyGuidePortal } from './components/StudyGuidePortal';
+import { StudyGuidePortal, StudyTab } from './components/StudyGuidePortal';
 import { TrainingPortal } from './components/TrainingPortal';
 import { SearchAndBookmarksModal } from './components/SearchAndBookmarksModal';
 import { AuditReportView } from './components/AuditReportView';
@@ -85,6 +85,7 @@ export default function App() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [trainingFilter, setTrainingFilter] = useState<{ unitId?: string; lessonId?: string }>({});
   const [studyUnitFilter, setStudyUnitFilter] = useState<string | undefined>(undefined);
+  const [studyTabFilter, setStudyTabFilter] = useState<StudyTab | undefined>(undefined);
   const [mapLabScope, setMapLabScope] = useState<AtlasScope | undefined>(undefined);
 
   const activePortal = progress.lastLocation.portal;
@@ -107,8 +108,9 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const openStudyGuide = (unitId?: string) => {
+  const openStudyGuide = (unitId?: string, tab?: StudyTab) => {
     setStudyUnitFilter(unitId);
+    setStudyTabFilter(tab);
     setPortal('study-guide');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -125,6 +127,7 @@ export default function App() {
     }
     if (portal === 'study-guide') {
       setStudyUnitFilter(undefined);
+      setStudyTabFilter(undefined);
     }
     if (portal === 'map-lab') {
       setMapLabScope(undefined);
@@ -231,6 +234,7 @@ export default function App() {
           {activePortal === 'study-guide' && (
             <StudyGuidePortal
               initialUnitId={studyUnitFilter}
+              initialTab={studyTabFilter}
               onGoToLesson={openLesson}
               onGoToAtlas={openAtlasLocation}
               onGoToTraining={(unitId, lessonId) => openTraining(unitId, lessonId)}
@@ -245,6 +249,7 @@ export default function App() {
               onRecordAnswer={recordQuizAnswer}
               onGoToLesson={openLesson}
               onGoToAtlas={openAtlasLocation}
+              onGoToComparisons={(tab, unitId) => openStudyGuide(unitId, tab)}
             />
           )}
 

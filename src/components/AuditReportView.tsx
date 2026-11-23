@@ -12,6 +12,11 @@ import {
   QUIZ_QUESTIONS,
   TEXTBOOK_UNITS
 } from '../data/bookIndex';
+import {
+  DISAMBIGUATION_ITEMS,
+  MINISTERIAL_COMPARATIVE_TABLES
+} from '../data/ministerialComparisons';
+import { TEXTBOOK_MAP_TEMPLATES } from '../data/mapTemplatesData';
 import { CheckCircle2, AlertTriangle, Info, ArrowRight } from 'lucide-react';
 
 interface AuditReportViewProps {
@@ -64,6 +69,21 @@ export const AuditReportView: React.FC<AuditReportViewProps> = ({
       name: `استخراج ودمج النماذج الوزارية الرسمية (${MINISTERIAL_BATCH_STATS.academicYear}) والأسئلة المولّدة`,
       status: MINISTERIAL_QUESTIONS.length > 0 && GENERATED_QUESTIONS.length > 0,
       detail: `تم فرز ${MINISTERIAL_BATCH_STATS.modelsAnalyzed} نموذجاً وزارياً واستخراج فقرات الجغرافيا حصراً (${MINISTERIAL_QUESTIONS.length} سؤالاً فريداً بمفاتيح التصحيح الإلكتروني) + ${GENERATED_QUESTIONS.length} سؤالاً تدريبياً مولّداً على النمط الوزاري + ${CORE_TEXTBOOK_QUESTIONS.length} سؤالاً من تقويمات الكتاب.`
+    },
+    {
+      name: 'استخراج خرائط وجداول الكثافة السكانية والمقارنات الوزارية والتخيير بين المتشابهات',
+      status:
+        MINISTERIAL_COMPARATIVE_TABLES.length >= 10 &&
+        DISAMBIGUATION_ITEMS.length >= 12 &&
+        TEXTBOOK_MAP_TEMPLATES.some((m) => m.id === 'map-yemen-population-density'),
+      detail: `طُبّقت طبقات الكثافة السكانية والأقاليم المناخية ومفاتيحها في خريطتي اليمن والوطن العربي ومعمل الخرائط (${TEXTBOOK_MAP_TEMPLATES.length} خرائط)، وجرى بناء ${MINISTERIAL_COMPARATIVE_TABLES.length} جدول مقارنة وزارية و${DISAMBIGUATION_ITEMS.length} محور تخيير وتمييز بين المواضع المتشابهة.`
+    },
+    {
+      name: 'تغطية المعالم التاريخية والساحلية والعلاجية باليمن والوطن العربي (النص + الخرائط + النوافذ العائمة)',
+      status:
+        ATLAS_LOCATIONS.filter((loc) => loc.scope === 'yemen' && loc.layer === 'tourism').length >= 10 &&
+        TEXTBOOK_MAP_TEMPLATES.some((m) => m.id === 'map-yemen-tourism-landmarks'),
+      detail: `توسعت طبقة المعالم السياحية والتاريخية في اليمن إلى ${ATLAS_LOCATIONS.filter((loc) => loc.scope === 'yemen' && loc.layer === 'tourism').length} دبابيس موثقة (تشمل ساحل الغدير وساحل أبين وصهاريج عدن وقلعة صيرة ومسجد العيدروس ودار الحجر وثلا وجسر شهارة وبراقش وقلعة القاهرة والخوخة وحمام دمت وعلي وشبام وسيئون وغيل باوزير) + ${ATLAS_LOCATIONS.filter((loc) => loc.scope === 'arab-world' && loc.layer === 'tourism').length} مواقع عربية، مع خريطة متخصصة في معمل الخرائط ونوافذ إثرائية عائمة داخل النصوص والجداول.`
     }
   ];
 

@@ -172,12 +172,15 @@ html[data-theme="night"] .text-emerald-950 {
 }
 
 html[data-theme="night"] .bg-amber-50,
-html[data-theme="night"] .bg-amber-50\/40 {
+html[data-theme="night"] .bg-amber-50\/40,
+html[data-theme="night"] .bg-amber-50\/50,
+html[data-theme="night"] .bg-amber-50\/70 {
   background-color: rgba(217, 119, 6, 0.18) !important;
 }
 html[data-theme="night"] .bg-amber-100 {
   background-color: rgba(217, 119, 6, 0.28) !important;
 }
+html[data-theme="night"] .border-amber-100,
 html[data-theme="night"] .border-amber-200,
 html[data-theme="night"] .border-amber-300 {
   border-color: rgba(251, 191, 36, 0.35) !important;
@@ -210,7 +213,8 @@ html[data-theme="night"] .border-rose-400 {
 }
 html[data-theme="night"] .text-rose-700,
 html[data-theme="night"] .text-rose-800,
-html[data-theme="night"] .text-rose-900 {
+html[data-theme="night"] .text-rose-900,
+html[data-theme="night"] .text-rose-950 {
   color: #fecdd3 !important;
 }
 

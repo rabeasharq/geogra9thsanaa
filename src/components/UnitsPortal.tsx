@@ -721,7 +721,13 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
                                   <tr key={rIdx} className="hover:bg-slate-50/60">
                                     {row.map((cell, cIdx) => (
                                       <td key={cIdx} className="px-4 py-2.5 text-slate-800">
-                                        {cell}
+                                        <RichTextbookText
+                                          text={cell}
+                                          enabled={wordEnrichmentEnabled}
+                                          termIndex={termIndex}
+                                          activeTerm={activePopover?.data.term}
+                                          onWordClick={handleWordClick}
+                                        />
                                       </td>
                                     ))}
                                   </tr>

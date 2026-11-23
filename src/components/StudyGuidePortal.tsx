@@ -1,23 +1,33 @@
 import React, { useMemo, useState } from 'react';
-import { ALL_CONCEPTS, TEXTBOOK_UNITS } from '../data/bookIndex';
-import { Printer, BookOpen, Compass, CheckSquare, Search, GitBranch } from 'lucide-react';
+import { ALL_CONCEPTS, TEXTBOOK_UNITS, getUnitById } from '../data/bookIndex';
+import { MINISTERIAL_COMPARATIVE_TABLES } from '../data/ministerialComparisons';
+import { MinisterialDisambiguationLab } from './MinisterialDisambiguationLab';
+import { Printer, BookOpen, Compass, CheckSquare, Search, GitBranch, ArrowLeftRight } from 'lucide-react';
+
+export type StudyTab =
+  | 'summary'
+  | 'glossary'
+  | 'tables'
+  | 'disambiguation'
+  | 'formulas'
+  | 'mindmaps';
 
 interface StudyGuidePortalProps {
   initialUnitId?: string;
+  initialTab?: StudyTab;
   onGoToLesson: (unitId: string, lessonId: string) => void;
   onGoToAtlas: (locationId: string) => void;
   onGoToTraining: (unitId: string, lessonId?: string) => void;
 }
 
-type StudyTab = 'summary' | 'glossary' | 'tables' | 'formulas' | 'mindmaps';
-
 export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   initialUnitId,
+  initialTab,
   onGoToLesson,
   onGoToAtlas,
   onGoToTraining
 }) => {
-  const [activeTab, setActiveTab] = useState<StudyTab>('summary');
+  const [activeTab, setActiveTab] = useState<StudyTab>(initialTab || 'summary');
   const [unitFilter, setUnitFilter] = useState<string>(initialUnitId || 'all');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedTableNotes, setExpandedTableNotes] = useState<Record<string, boolean>>({});
@@ -25,6 +35,10 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   React.useEffect(() => {
     if (initialUnitId) setUnitFilter(initialUnitId);
   }, [initialUnitId]);
+
+  React.useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
 
   const filteredUnits = useMemo(() => {
     return unitFilter === 'all'
@@ -74,6 +88,12 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
     );
   }, [filteredUnits]);
 
+  const filteredMinisterialTables = useMemo(() => {
+    return unitFilter === 'all'
+      ? MINISTERIAL_COMPARATIVE_TABLES
+      : MINISTERIAL_COMPARATIVE_TABLES.filter((t) => t.unitId === unitFilter);
+  }, [unitFilter]);
+
   const handlePrintPdf = () => {
     window.print();
   };
@@ -81,7 +101,8 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   const tabs: { id: StudyTab; label: string }[] = [
     { id: 'summary', label: 'الخلاصة الشاملة للدروس' },
     { id: 'glossary', label: 'قاموس المفاهيم والتعريفات' },
-    { id: 'tables', label: 'الجداول والمقارنات' },
+    { id: 'tables', label: 'الجداول والمقارنات الوزارية' },
+    { id: 'disambiguation', label: 'التخيير والتمييز بين المتشابهات' },
     { id: 'formulas', label: 'القوانين والأرقام القياسية' },
     { id: 'mindmaps', label: 'الخرائط الذهنية السببية' }
   ];
@@ -324,74 +345,168 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
 
       {/* TAB 3: COMPARATIVE TABLES & CLASSIFICATIONS */}
       {activeTab === 'tables' && (
-        <div className="space-y-6">
-          {allTables.map((tbl) => (
-            <section
-              key={tbl.id}
-              className="print-break-inside-avoid overflow-hidden rounded-xl border border-slate-200 bg-white"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-5 py-3">
-                <div>
-                  <h3 className="font-display text-sm font-bold text-slate-900">{tbl.title}</h3>
-                  <p className="text-xs text-slate-500">
-                    الوحدة {tbl.unitNumber} · {tbl.lessonTitle} ·{' '}
-                    <span className="font-mono">{tbl.pageRef}</span>
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onGoToLesson(tbl.unitId, tbl.lessonId)}
-                  className="no-print text-xs font-medium text-sky-700 hover:underline"
+        <div className="space-y-8">
+          {/* High-Focus Ministerial Comparative Tables */}
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
+              <div>
+                <h2 className="font-display text-base font-extrabold text-slate-900">
+                  جداول المقارنات المركّزة من واقع الأسئلة الوزارية ({filteredMinisterialTables.length} جدولاً)
+                </h2>
+                <p className="mt-1 text-xs text-slate-700">
+                  جداول مصممة لربط أوجه المقارنة المتكررة في الامتحانات الوزارية مع مواضع أسئلتها وتنبيهات عدم الخلط.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('disambiguation')}
+                className="no-print inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+              >
+                <ArrowLeftRight className="h-3.5 w-3.5" />
+                <span>تدريب التخيير بين المتشابهات</span>
+              </button>
+            </div>
+
+            {filteredMinisterialTables.map((ct) => {
+              const unit = getUnitById(ct.unitId);
+              return (
+                <section
+                  key={ct.id}
+                  className="print-break-inside-avoid overflow-hidden rounded-xl border border-amber-200 bg-white"
                 >
-                  فتح الدرس
-                </button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-right text-sm">
-                  <thead className="bg-slate-50/70 text-xs text-slate-600">
-                    <tr>
-                      {tbl.headers.map((h, i) => (
-                        <th key={i} className="border-b border-slate-200 px-4 py-2.5 font-semibold">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {tbl.rows.map((row, rIdx) => (
-                      <tr key={rIdx}>
-                        {row.map((cell, cIdx) => (
-                          <td key={cIdx} className="px-4 py-2.5 text-slate-800">
-                            {cell}
-                          </td>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-100 bg-amber-50/50 px-5 py-3">
+                    <div>
+                      <h3 className="font-display text-sm font-bold text-slate-900">{ct.title}</h3>
+                      <p className="text-xs text-slate-600">
+                        {unit ? `الوحدة ${unit.unitNumber}: ${unit.title}` : ''} ·{' '}
+                        <span className="font-mono">{ct.pageRef}</span> · مواضع الوزاري:{' '}
+                        <strong className="font-mono text-amber-800">{ct.ministerialSlots}</strong>
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onGoToLesson(ct.unitId, ct.lessonId)}
+                      className="no-print text-xs font-medium text-sky-700 hover:underline"
+                    >
+                      فتح الدرس
+                    </button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-right text-sm">
+                      <thead className="bg-slate-50/70 text-xs text-slate-600">
+                        <tr>
+                          {ct.headers.map((h, i) => (
+                            <th key={i} className="border-b border-slate-200 px-4 py-2.5 font-semibold">
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {ct.rows.map((row, rIdx) => (
+                          <tr key={rIdx}>
+                            {row.map((cell, cIdx) => (
+                              <td key={cIdx} className="px-4 py-2.5 text-slate-800">
+                                {cell}
+                              </td>
+                            ))}
+                          </tr>
                         ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {tbl.note && (
-                <div className="border-t border-slate-200 bg-amber-50/50 px-5 py-2.5 text-xs text-amber-900">
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="border-t border-slate-100 bg-slate-50/60 px-5 py-2.5 text-xs text-slate-700">
+                    <strong className="text-slate-900">مفتاح التركيز الوزاري: </strong>
+                    {ct.focusTip}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+
+          {/* All Official Textbook Tables by Lesson */}
+          <div className="space-y-4">
+            <h2 className="font-display text-base font-extrabold text-slate-900">
+              جداول الدروس التفصيلية في الكتاب المدرسي ({allTables.length})
+            </h2>
+            {allTables.map((tbl) => (
+              <section
+                key={tbl.id}
+                className="print-break-inside-avoid overflow-hidden rounded-xl border border-slate-200 bg-white"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-5 py-3">
+                  <div>
+                    <h3 className="font-display text-sm font-bold text-slate-900">{tbl.title}</h3>
+                    <p className="text-xs text-slate-500">
+                      الوحدة {tbl.unitNumber} · {tbl.lessonTitle} ·{' '}
+                      <span className="font-mono">{tbl.pageRef}</span>
+                    </p>
+                  </div>
                   <button
                     type="button"
-                    onClick={() =>
-                      setExpandedTableNotes((prev) => ({
-                        ...prev,
-                        [tbl.id]: !prev[tbl.id]
-                      }))
-                    }
-                    className="no-print font-semibold hover:underline"
+                    onClick={() => onGoToLesson(tbl.unitId, tbl.lessonId)}
+                    className="no-print text-xs font-medium text-sky-700 hover:underline"
                   >
-                    {expandedTableNotes[tbl.id]
-                      ? 'إخفاء ملاحظة التدقيق (خارج نص الكتاب)'
-                      : 'ملاحظة تدقيق خارج نص الكتاب — اضغط للإظهار'}
+                    فتح الدرس
                   </button>
-                  {expandedTableNotes[tbl.id] && <p className="mt-1.5 leading-relaxed">{tbl.note}</p>}
                 </div>
-              )}
-            </section>
-          ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-right text-sm">
+                    <thead className="bg-slate-50/70 text-xs text-slate-600">
+                      <tr>
+                        {tbl.headers.map((h, i) => (
+                          <th key={i} className="border-b border-slate-200 px-4 py-2.5 font-semibold">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {tbl.rows.map((row, rIdx) => (
+                        <tr key={rIdx}>
+                          {row.map((cell, cIdx) => (
+                            <td key={cIdx} className="px-4 py-2.5 text-slate-800">
+                              {cell}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {tbl.note && (
+                  <div className="border-t border-slate-200 bg-amber-50/50 px-5 py-2.5 text-xs text-amber-900">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedTableNotes((prev) => ({
+                          ...prev,
+                          [tbl.id]: !prev[tbl.id]
+                        }))
+                      }
+                      className="no-print font-semibold hover:underline"
+                    >
+                      {expandedTableNotes[tbl.id]
+                        ? 'إخفاء ملاحظة التدقيق (خارج نص الكتاب)'
+                        : 'ملاحظة تدقيق خارج نص الكتاب — اضغط للإظهار'}
+                    </button>
+                    {expandedTableNotes[tbl.id] && <p className="mt-1.5 leading-relaxed">{tbl.note}</p>}
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
         </div>
+      )}
+
+      {/* TAB 3.5: MINISTERIAL LOOKALIKE CHOICE & DISAMBIGUATION LAB */}
+      {activeTab === 'disambiguation' && (
+        <MinisterialDisambiguationLab
+          unitFilter={unitFilter}
+          onChangeUnitFilter={setUnitFilter}
+          onGoToLesson={onGoToLesson}
+          onGoToAtlas={onGoToAtlas}
+        />
       )}
 
       {/* TAB 4: FORMULAS & KEY METRICS */}

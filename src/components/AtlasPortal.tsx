@@ -637,7 +637,9 @@ export const YemenSvgMap: React.FC<{
     })
     .join(' ');
 
-  const showTopo = activeLayer === 'all' || activeLayer === 'topography' || activeLayer === 'climate';
+  const showTopo = activeLayer === 'all' || activeLayer === 'topography';
+  const showClimate = activeLayer === 'climate';
+  const showPopulation = activeLayer === 'population';
   const showWater = activeLayer === 'all' || activeLayer === 'water';
 
   return (
@@ -748,6 +750,35 @@ export const YemenSvgMap: React.FC<{
         </g>
       )}
 
+      {/* 4 Yemeni Climate Zones Overlay */}
+      {showClimate && (
+        <g>
+          {/* الساحلي (تهامة والساحل الجنوبي) */}
+          <path d="M 134,242 L 168,242 L 182,482 L 146,472 Z" fill="#f59e0b" opacity="0.42" />
+          <path d="M 155,482 Q 360,445 640,340 L 660,362 Q 370,475 162,504 Z" fill="#f59e0b" opacity="0.36" />
+          {/* متوسط الارتفاع (400–1500م) */}
+          <ellipse cx="235" cy="350" rx="68" ry="118" fill="#84cc16" opacity="0.32" />
+          {/* المرتفع (>1500م - أبرد صيفاً وشتاءً) */}
+          <ellipse cx="212" cy="312" rx="42" ry="96" fill="#059669" opacity="0.48" />
+          {/* الداخلي والصحراوي الجاف */}
+          <ellipse cx="525" cy="240" rx="195" ry="78" fill="#ea580c" opacity="0.28" />
+        </g>
+      )}
+
+      {/* Population Density Choropleth Overlay (Textbook Map p. 38–39) */}
+      {showPopulation && (
+        <g>
+          {/* منخفضة (1–49 نسمة/كم²) في الصحراء والهضبة الشرقية */}
+          <ellipse cx="555" cy="255" rx="220" ry="92" fill="#fef3c7" stroke="#d97706" strokeWidth="1" opacity="0.72" />
+          {/* متوسطة (50–219 نسمة/كم²) في الأطراف الوسطى والسواحل */}
+          <ellipse cx="242" cy="340" rx="88" ry="135" fill="#fb923c" stroke="#c2410c" strokeWidth="1.2" opacity="0.52" />
+          {/* عالية وعالية جداً (>220 نسمة/كم²): تعز، إب، أمانة العاصمة، والحديدة */}
+          <ellipse cx="206" cy="322" rx="44" ry="94" fill="#be123c" stroke="#881337" strokeWidth="1.5" opacity="0.62" />
+          <ellipse cx="162" cy="342" rx="24" ry="52" fill="#be123c" opacity="0.54" />
+          <circle cx="224" cy="422" r="26" fill="#9f1239" opacity="0.68" />
+        </g>
+      )}
+
       {/* Wadis & Surface Water Vectors */}
       {showWater && (
         <g stroke="#0369a1" strokeWidth="2.3" fill="none" strokeLinecap="round">
@@ -755,6 +786,44 @@ export const YemenSvgMap: React.FC<{
           <path d="M 212,358 Q 175,374 150,384" />
           <path d="M 480,275 Q 542,282 595,318" />
           <path d="M 248,300 Q 285,302 315,295" />
+        </g>
+      )}
+
+      {/* Thematic SVG Legend Card (Population or Climate) */}
+      {showPopulation && (
+        <g transform="translate(22, 438)">
+          <rect width="230" height="106" rx="8" fill="#ffffff" fillOpacity="0.94" stroke="#9f1239" strokeWidth="1.4" />
+          <text x="216" y="21" textAnchor="end" fill="#0f172a" fontSize="11" fontWeight="800">
+            مفتاح الكثافة السكانية (ص 38–39)
+          </text>
+          <rect x="196" y="34" width="16" height="12" rx="2" fill="#9f1239" opacity="0.82" />
+          <text x="188" y="44" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+            عالية جداً (&gt;220 نسمة/كم²): تعز، صنعاء، إب، الحديدة
+          </text>
+          <rect x="196" y="56" width="16" height="12" rx="2" fill="#fb923c" opacity="0.75" />
+          <text x="188" y="66" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+            متوسطة (50–219 نسمة/كم²): الوسط والسواحل
+          </text>
+          <rect x="196" y="78" width="16" height="12" rx="2" fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
+          <text x="188" y="88" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+            منخفضة (1–49 نسمة/كم²): حضرموت، المهرة، مأرب
+          </text>
+        </g>
+      )}
+      {showClimate && (
+        <g transform="translate(22, 438)">
+          <rect width="222" height="108" rx="8" fill="#ffffff" fillOpacity="0.94" stroke="#065f46" strokeWidth="1.4" />
+          <text x="208" y="20" textAnchor="end" fill="#0f172a" fontSize="11" fontWeight="800">
+            الأقاليم المناخية في اليمن (ص 19)
+          </text>
+          <rect x="190" y="31" width="14" height="11" rx="2" fill="#f59e0b" opacity="0.75" />
+          <text x="182" y="40" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">الإقليم الساحلي (حار رطب صيفاً)</text>
+          <rect x="190" y="50" width="14" height="11" rx="2" fill="#84cc16" opacity="0.7" />
+          <text x="182" y="59" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">متوسط الارتفاع (400–1500م)</text>
+          <rect x="190" y="69" width="14" height="11" rx="2" fill="#059669" opacity="0.78" />
+          <text x="182" y="78" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">المرتفع (&gt;1500م: أمطار صيفية غزيرة)</text>
+          <rect x="190" y="88" width="14" height="11" rx="2" fill="#ea580c" opacity="0.6" />
+          <text x="182" y="97" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">الداخلي الصحراوي (جاف قاري)</text>
         </g>
       )}
 
@@ -824,6 +893,8 @@ export const ArabWorldSvgMap: React.FC<{
     .join(' ');
 
   const showWater = activeLayer === 'all' || activeLayer === 'water';
+  const showPopulation = activeLayer === 'population';
+  const showClimate = activeLayer === 'climate';
 
   return (
     <svg
@@ -894,12 +965,78 @@ export const ArabWorldSvgMap: React.FC<{
       {/* Mediterranean fertile coastal band & Atlas range tint */}
       <path d="M 160,115 Q 250,95 360,105" stroke="#15803d" strokeWidth="10" strokeLinecap="round" opacity="0.28" fill="none" />
 
+      {/* Arab World Climate Belts Overlay (Textbook p. 73) */}
+      {showClimate && (
+        <g>
+          {/* البحر المتوسط شمالاً */}
+          <path d="M 145,100 Q 290,78 440,108 L 620,108 L 645,78" stroke="#15803d" strokeWidth="20" strokeLinecap="round" opacity="0.45" fill="none" />
+          {/* الصحراوي وشبه الصحراوي */}
+          <ellipse cx="385" cy="235" rx="195" ry="68" fill="#f59e0b" opacity="0.32" />
+          <ellipse cx="735" cy="215" rx="75" ry="52" fill="#f59e0b" opacity="0.32" />
+          {/* المداري جنوباً (السودان، الصومال، موريتانيا، اليمن) */}
+          <ellipse cx="565" cy="365" rx="115" ry="44" fill="#10b981" opacity="0.38" />
+          <circle cx="712" cy="322" r="24" fill="#10b981" opacity="0.42" />
+        </g>
+      )}
+
+      {/* Arab World Population Density Choropleth (Textbook Map p. 90) */}
+      {showPopulation && (
+        <g>
+          {/* منخفضة/نادرة: الصحراء الكبرى والربع الخالي وبادية الشام */}
+          <ellipse cx="365" cy="240" rx="185" ry="62" fill="#fef3c7" opacity="0.55" />
+          <ellipse cx="755" cy="230" rx="68" ry="46" fill="#fef3c7" opacity="0.55" />
+          {/* عالية جداً: وادي النيل والدلتا */}
+          <path d="M 604,132 L 614,225 L 618,310" stroke="#9f1239" strokeWidth="18" strokeLinecap="round" opacity="0.65" fill="none" />
+          {/* عالية: دجلة والفرات + سواحل الشام + سواحل المغرب + المرتفعات اليمنية */}
+          <path d="M 718,68 L 765,120 L 790,146" stroke="#be1239" strokeWidth="16" strokeLinecap="round" opacity="0.58" fill="none" />
+          <path d="M 642,92 L 640,136" stroke="#be1239" strokeWidth="14" strokeLinecap="round" opacity="0.58" fill="none" />
+          <path d="M 155,104 Q 250,84 355,100" stroke="#be1239" strokeWidth="14" strokeLinecap="round" opacity="0.56" fill="none" />
+          <circle cx="712" cy="316" r="18" fill="#be1239" opacity="0.62" />
+        </g>
+      )}
+
       {/* Major Rivers (Nile, Tigris, Euphrates) */}
       {showWater && (
         <g stroke="#0284c7" strokeWidth="2.8" fill="none" strokeLinecap="round">
           <path d="M 606,144 L 610,200 L 616,280 L 618,380" />
           <path d="M 720,65 L 758,105 L 785,140" />
           <path d="M 738,65 L 765,105 L 785,140" />
+        </g>
+      )}
+
+      {/* Thematic Map Legends for Arab World */}
+      {showPopulation && (
+        <g transform="translate(36, 442)">
+          <rect width="265" height="106" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#9f1239" strokeWidth="1.4" />
+          <text x="252" y="21" textAnchor="end" fill="#0f172a" fontSize="11" fontWeight="800">
+            خريطة الكثافة السكانية العربية (ص 90)
+          </text>
+          <rect x="234" y="34" width="16" height="12" rx="2" fill="#9f1239" opacity="0.82" />
+          <text x="226" y="44" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">
+            عالية جداً وعالية: النيل، دجلة والفرات، سواحل الشام والمغرب، اليمن
+          </text>
+          <rect x="234" y="56" width="16" height="12" rx="2" fill="#d9f99d" stroke="#65a30d" strokeWidth="1" />
+          <text x="226" y="66" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">
+            متوسطة: الهضاب الساحلية وسفوح الجبال ومناطق الرعي
+          </text>
+          <rect x="234" y="78" width="16" height="12" rx="2" fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
+          <text x="226" y="88" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">
+            منخفضة ونادرة: الصحراء الكبرى والربع الخالي وبادية الشام
+          </text>
+        </g>
+      )}
+      {showClimate && (
+        <g transform="translate(36, 442)">
+          <rect width="250" height="106" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#065f46" strokeWidth="1.4" />
+          <text x="236" y="21" textAnchor="end" fill="#0f172a" fontSize="11" fontWeight="800">
+            الأقاليم المناخية والنباتية (ص 73–75)
+          </text>
+          <rect x="218" y="34" width="16" height="12" rx="2" fill="#15803d" opacity="0.7" />
+          <text x="210" y="44" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">البحر المتوسط (شمالاً · ممطر شتاءً · الأرز والإستبس)</text>
+          <rect x="218" y="56" width="16" height="12" rx="2" fill="#f59e0b" opacity="0.6" />
+          <text x="210" y="66" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">الصحراوي وشبه الصحراوي (الأوسع مساحةً · شوكية)</text>
+          <rect x="218" y="78" width="16" height="12" rx="2" fill="#10b981" opacity="0.72" />
+          <text x="210" y="88" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">المداري والاستوائي (جنوباً · ممطر صيفاً · السافانا)</text>
         </g>
       )}
 

@@ -393,6 +393,31 @@ export const ATLAS_LOCATIONS: AtlasLocation[] = [
     conceptIds: ['concept-pop-density']
   },
   {
+    id: 'loc-ibb-density',
+    name: 'محافظة إب والوسط المرتفع الكثافة (>220 نسمة/كم²)',
+    shortLabel: 'إب (كثافة عالية جداً)',
+    scope: 'yemen',
+    layer: 'population',
+    unitId: 'unit-2',
+    lessonId: 'u2-l1',
+    pageRef: 'ص 38 – 39',
+    lat: 13.97,
+    lng: 44.18,
+    ...(() => {
+      const p = projectYemen(13.97, 44.18);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: -72,
+    labelDy: -14,
+    elevationMeters: 2050,
+    summary: 'تمثل إب (10.7% من سكان اليمن) مع تعز وأمانة العاصمة والحديدة حزام الكثافة السكانية العالية جداً (>220 نسمة/كم²) لوفرة الأمطار والمدرجات الزراعية الخصبة.',
+    facts: [
+      'ثالث أعلى محافظة في النسبة السكانية (10.7% من سكان الجمهورية).',
+      'نموذج لتأثير المناخ المعتدل والأمطار الغزيرة والزراعة في الجذب السكاني (ص 38–39).'
+    ],
+    conceptIds: ['concept-pop-density']
+  },
+  {
     id: 'loc-sanaa-city',
     name: 'أمانة العاصمة وصنعاء القديمة',
     shortLabel: 'صنعاء القديمة',
@@ -606,6 +631,203 @@ export const ATLAS_LOCATIONS: AtlasLocation[] = [
     facts: [
       'مذكورة في درس السياحة ضمن المعالم الأثرية البالغ عددها أكثر من 2288 معلماً.',
       'نموذج فريد للعمارة الطينية المتكيفة مع المناخ الحار الجاف.'
+    ],
+    conceptIds: ['concept-tourism-yemen']
+  },
+  {
+    id: 'loc-aden-coast-landmarks',
+    name: 'معالم عدن الساحلية والتاريخية (ساحل الغدير، ساحل أبين، الصهاريج، قلعة صيرة، مسجد العيدروس)',
+    shortLabel: 'ساحل الغدير وأبين والصهاريج',
+    scope: 'yemen',
+    layer: 'tourism',
+    unitId: 'unit-2',
+    lessonId: 'u2-l4',
+    pageRef: 'ص 54 – 55',
+    lat: 12.84,
+    lng: 44.78,
+    ...(() => {
+      const p = projectYemen(12.84, 44.78);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: -78,
+    labelDy: 24,
+    summary: 'تجمع محافظة عدن بين المعالم التاريخية العريقة (صهاريج عدن، قلعة صيرة، مسجد العيدروس) والشواطئ السياحية البارزة مثل ساحل الغدير في البريقة وساحل أبين في خور مكسر.',
+    facts: [
+      'ساحل الغدير وساحل أبين من أبرز الشواطئ السياحية المقررة في درس السياحة باليمن (ص 54).',
+      'تُعد صهاريج عدن وقلعة صيرة ومسجد العيدروس من أبرز المعالم الأثرية والتاريخية في عدن (ص 54–55).'
+    ],
+    conceptIds: ['concept-tourism-yemen']
+  },
+  {
+    id: 'loc-thula-dar-hajar',
+    name: 'دار الحجر ومدينة ثلا التاريخية (صنعاء وعمران)',
+    shortLabel: 'دار الحجر وثلا',
+    scope: 'yemen',
+    layer: 'tourism',
+    unitId: 'unit-2',
+    lessonId: 'u2-l4',
+    pageRef: 'ص 54 – 55، 108',
+    lat: 15.56,
+    lng: 43.9,
+    ...(() => {
+      const p = projectYemen(15.56, 43.9);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: -84,
+    labelDy: -8,
+    elevationMeters: 2350,
+    summary: 'معلمان معماريان وتاريخيان بارزان في المرتفعات الغربية: دار الحجر في وادي ظهر شمال غرب صنعاء ومدينة ثلا الأثرية المسوّرة بمحافظة عمران.',
+    facts: [
+      'دار الحجر معلم سياحي وتاريخي شهير ورد في وحدتي اليمن والوطن العربي (ص 54 و108).',
+      'مدينة ثلا الأثرية من المدن التاريخية الحجرية المحصنة شمال غرب صنعاء (ص 54).'
+    ],
+    conceptIds: ['concept-tourism-yemen']
+  },
+  {
+    id: 'loc-shahhara-bridge',
+    name: 'جسر شهارة التاريخي (عمران)',
+    shortLabel: 'جسر شهارة',
+    scope: 'yemen',
+    layer: 'tourism',
+    unitId: 'unit-2',
+    lessonId: 'u2-l4',
+    pageRef: 'ص 54 – 55',
+    lat: 16.18,
+    lng: 43.7,
+    ...(() => {
+      const p = projectYemen(16.18, 43.7);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: -55,
+    labelDy: -34,
+    elevationMeters: 2600,
+    summary: 'جسر حجري معلق فريد فوق أخدود جبلي عميق يربط بين جبلين في مديرية شهارة، ويُعد من روائع العمارة الهندسية اليمنية.',
+    facts: [
+      'مذكور صراحة ضمن المعالم التاريخية والسياحية في الجمهورية اليمنية (ص 54).',
+      'يمثل نموذجاً للسياحة الجبلية والأثرية والقفز والتسلق الجبلي.'
+    ],
+    conceptIds: ['concept-tourism-yemen']
+  },
+  {
+    id: 'loc-baraqish-ancient',
+    name: 'مدينة براقش الأثرية (الجوف)',
+    shortLabel: 'مدينة براقش',
+    scope: 'yemen',
+    layer: 'tourism',
+    unitId: 'unit-2',
+    lessonId: 'u2-l4',
+    pageRef: 'ص 54 – 55',
+    lat: 15.98,
+    lng: 44.8,
+    ...(() => {
+      const p = projectYemen(15.98, 44.8);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: 66,
+    labelDy: -28,
+    elevationMeters: 1120,
+    summary: 'مدينة أثرية تاريخية عريقة بمحافظة الجوف شمال شرق صنعاء على طريق البخور القديم، اشتهرت بسورها الحجري وأبراجها ومعابدها.',
+    facts: [
+      'وردت مع سد مأرب ضمن أبرز المدن والمواقع الأثرية القديمة في اليمن (ص 54).',
+      'ترتبط بتراث الممالك اليمنية القديمة (معين وسبأ).'
+    ],
+    conceptIds: ['concept-tourism-yemen']
+  },
+  {
+    id: 'loc-taiz-cairo-castle',
+    name: 'قلعة القاهرة التاريخية (تعز)',
+    shortLabel: 'قلعة القاهرة (تعز)',
+    scope: 'yemen',
+    layer: 'tourism',
+    unitId: 'unit-2',
+    lessonId: 'u2-l4',
+    pageRef: 'ص 54 – 55',
+    lat: 13.56,
+    lng: 44.01,
+    ...(() => {
+      const p = projectYemen(13.56, 44.01);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: 74,
+    labelDy: 24,
+    elevationMeters: 1500,
+    summary: 'قلعة تاريخية حصينة تتربع على السفح الشمالي لجبل صبر وتطل على مدينة تعز، وتُعد من أبرز المعالم الأثرية في اليمن.',
+    facts: [
+      'مقررة بالاسم ضمن المعالم التاريخية والسياحية في درس السياحة (ص 54).',
+      'تطل على المدينة في موقع استراتيجي بين المرتفعات الجنوبية.'
+    ],
+    conceptIds: ['concept-tourism-yemen']
+  },
+  {
+    id: 'loc-damt-hammam',
+    name: 'حمام دمت وحمام علي (السياحة العلاجية)',
+    shortLabel: 'حمام دمت وعلي',
+    scope: 'yemen',
+    layer: 'tourism',
+    unitId: 'unit-2',
+    lessonId: 'u2-l4',
+    pageRef: 'ص 54 – 55، 108',
+    lat: 14.1,
+    lng: 44.68,
+    ...(() => {
+      const p = projectYemen(14.1, 44.68);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: 82,
+    labelDy: -8,
+    elevationMeters: 1750,
+    summary: 'أشهر مواقع السياحة العلاجية في اليمن بفضل ينابيع المياه المعدنية والكبريتية الحارة الطبيعية في دمت (الضالع) وحمام علي (ذمار).',
+    facts: [
+      'تمثل الحمامات الطبيعية العلاجية أحد الأنشطة السياحية الرئيسة المقررة في ص 55 وص 108.',
+      'تستقطب السياحة الداخلية والخارجية طلباً للاستشفاء الطبيعي.'
+    ],
+    conceptIds: ['concept-tourism-yemen', 'concept-tourism-types']
+  },
+  {
+    id: 'loc-khokha-beach',
+    name: 'ساحل الخوخة السياحي (الحديدة)',
+    shortLabel: 'ساحل الخوخة',
+    scope: 'yemen',
+    layer: 'tourism',
+    unitId: 'unit-2',
+    lessonId: 'u2-l4',
+    pageRef: 'ص 54 – 55',
+    lat: 13.81,
+    lng: 43.25,
+    ...(() => {
+      const p = projectYemen(13.81, 43.25);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: -72,
+    labelDy: -10,
+    summary: 'شاطئ ومنتجع ساحلي سياحي على البحر الأحمر في محافظة الحديدة، يشتهر بصفاء مياهه وشواطئه الرملية وبساتين النخيل.',
+    facts: [
+      'مذكور بالاسم في درس السياحة ضمن المعالم الساحلية والسياحية في اليمن (ص 54).',
+      'يمثل السياحة البحرية والترفيهية على الساحل الغربي لليمن.'
+    ],
+    conceptIds: ['concept-tourism-yemen']
+  },
+  {
+    id: 'loc-seiyun-ghail',
+    name: 'قصر سيئون وغيل باوزير (حضرموت)',
+    shortLabel: 'قصر سيئون وغيل باوزير',
+    scope: 'yemen',
+    layer: 'tourism',
+    unitId: 'unit-2',
+    lessonId: 'u2-l4',
+    pageRef: 'ص 48، 54 – 55',
+    lat: 15.55,
+    lng: 49.05,
+    ...(() => {
+      const p = projectYemen(15.55, 49.05);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: 74,
+    labelDy: 18,
+    summary: 'معلمان بارزان في حضرموت: قصر سيئون التاريخي في قلب وادي حضرموت، ومدينة وعيون غيل باوزير التاريخية والساحلية قرب المكلا.',
+    facts: [
+      'قصر سيئون وغيل باوزير من المعالم المقررة في درس السياحة (ص 54).',
+      'كما ذُكرت غيل باوزير في مناطق تواجد الحجر الجيري باليمن (ص 48).'
     ],
     conceptIds: ['concept-tourism-yemen']
   },
@@ -971,5 +1193,126 @@ export const ATLAS_LOCATIONS: AtlasLocation[] = [
       'رافد مهم للسياحة الثقافية والعلمية.'
     ],
     conceptIds: ['concept-tourism-types']
+  },
+  {
+    id: 'loc-levant-tourism',
+    name: 'معالم سوريا ولبنان (تدمر، قلعة حلب، بعلبك، صيدا)',
+    shortLabel: 'معالم سوريا ولبنان',
+    scope: 'arab-world',
+    layer: 'tourism',
+    unitId: 'unit-4',
+    lessonId: 'u4-l5',
+    pageRef: 'ص 79، 108',
+    lat: 34.4,
+    lng: 36.8,
+    ...(() => {
+      const p = projectArabWorld(34.4, 36.8);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: 58,
+    labelDy: -22,
+    summary: 'تحتضن سوريا (تدمر، قلعة حلب، الجامع الأموي) ولبنان (بعلبك، صيدا، جبيل، مغارة جعيتا) معالم أثرية عريقة وأنهاراً تنبع من داخل الوطن العربي كالعاصي والليطاني.',
+    facts: [
+      'تمييز وزاري مهم: تدمر وقلعة حلب في سوريا، وبعلبك وصيدا في لبنان، والبتراء في الأردن (ص 108).',
+      'يمتد على سواحلها إقليم البحر المتوسط الممطر شتاءً وتنمو فيه غابات الأرز والصنوبر.'
+    ],
+    conceptIds: ['concept-tourism-types', 'concept-arab-climate-regions']
+  },
+  {
+    id: 'loc-fez-marrakech',
+    name: 'فاس ومراكش التاريخيتان (المغرب)',
+    shortLabel: 'فاس ومراكش',
+    scope: 'arab-world',
+    layer: 'tourism',
+    unitId: 'unit-4',
+    lessonId: 'u4-l5',
+    pageRef: 'ص 108 – 109',
+    lat: 34.03,
+    lng: -5.0,
+    ...(() => {
+      const p = projectArabWorld(34.03, -5.0);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: -50,
+    labelDy: 24,
+    summary: 'حاضرتان تاريخيتان بارزتان في المملكة المغربية، تشتهران بالعمارة الإسلامية والأندلسية والأسواق التاريخية والجامعات العريقة.',
+    facts: [
+      'من أكثر المعالم المغاربية وروداً في أسئلة المطابقة الوزارية (س29 ص 108).',
+      'تمثلان السياحة الثقافية والتاريخية في الجناح الأفريقي للوطن العربي.'
+    ],
+    conceptIds: ['concept-tourism-types']
+  },
+  {
+    id: 'loc-qishlah-hail',
+    name: 'قلعة القشلة الأثرية (السعودية)',
+    shortLabel: 'قلعة القشلة',
+    scope: 'arab-world',
+    layer: 'tourism',
+    unitId: 'unit-4',
+    lessonId: 'u4-l5',
+    pageRef: 'ص 108 – 109',
+    lat: 27.52,
+    lng: 41.7,
+    ...(() => {
+      const p = projectArabWorld(27.52, 41.7);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: 52,
+    labelDy: 14,
+    summary: 'قلعة طينية تاريخية بارزة في حائل بالمملكة العربية السعودية، وردت صورتها ضمن نماذج المعالم السياحية العربية في درس السياحة.',
+    facts: [
+      'نموذج للعمارة التراثية والسياحة الثقافية في شبه الجزيرة العربية (ص 108–109).',
+      'من المعالم المقررة التي يميز بها الطالب بين قلاع اليمن والسعودية والشام.'
+    ],
+    conceptIds: ['concept-tourism-types']
+  },
+  {
+    id: 'loc-sudan-savanna',
+    name: 'السودان وجبل مرة والسافانا والثروة الحيوانية',
+    shortLabel: 'السودان والسافانا',
+    scope: 'arab-world',
+    layer: 'climate',
+    unitId: 'unit-3',
+    lessonId: 'u3-l3',
+    pageRef: 'ص 68، 74، 95',
+    lat: 13.8,
+    lng: 29.8,
+    ...(() => {
+      const p = projectArabWorld(13.8, 29.8);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: -60,
+    labelDy: 16,
+    elevationMeters: 3042,
+    summary: 'يمثل وسط السودان وجنوبه نطاق الإقليم المداري الممطر صيفاً وحشائش السافانا وأشجار الصمغ العربي، ويضم جبل مرة البركاني وتتصدر السودان (مع الصومال) الثروة الحيوانية العربية.',
+    facts: [
+      'جبل مرة في غرب السودان من أمثلة الجبال البركانية في الوطن العربي (ص 68).',
+      'تتصدر السودان والصومال تربية الماشية في المراعي الطبيعية العربية البالغة 256 مليون هكتار (ص 95).'
+    ],
+    conceptIds: ['concept-arab-climate-regions', 'concept-folded-fault-mountains']
+  },
+  {
+    id: 'loc-mauritania-iron',
+    name: 'موريتانيا (خام الحديد والثروة السمكية)',
+    shortLabel: 'موريتانيا (الحديد والأسماك)',
+    scope: 'arab-world',
+    layer: 'economy',
+    unitId: 'unit-4',
+    lessonId: 'u4-l3',
+    pageRef: 'ص 96، 100',
+    lat: 20.5,
+    lng: -11.5,
+    ...(() => {
+      const p = projectArabWorld(20.5, -11.5);
+      return { svgX: p.x, svgY: p.y };
+    })(),
+    labelDx: 68,
+    labelDy: 10,
+    summary: 'تتصدر موريتانيا الدول العربية في إنتاج خام الحديد (11,500 ألف طن من إجمالي عربي يبلغ 19,895 ألف طن)، كما تأتي ضمن الدول الخمس الأعلى في صيد الأسماك.',
+    facts: [
+      'الأولى عربياً في خام الحديد وفق جدول المعادن (ص 100).',
+      'ساحل أطلسي غني بالأسماك ضمن المراتب الخمس الأولى عربياً (ص 96).'
+    ],
+    conceptIds: ['concept-industry-factors', 'concept-food-security']
   }
 ];

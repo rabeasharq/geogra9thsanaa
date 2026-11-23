@@ -42,6 +42,7 @@ interface TrainingPortalProps {
   onRecordAnswer: (questionId: string, selected: string, isCorrect: boolean) => void;
   onGoToLesson: (unitId: string, lessonId: string) => void;
   onGoToAtlas: (locationId: string) => void;
+  onGoToComparisons?: (tab: 'tables' | 'disambiguation', unitId?: string) => void;
 }
 
 const TYPE_LABELS: Record<QuestionType | 'all', string> = {
@@ -121,7 +122,8 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
   progress,
   onRecordAnswer,
   onGoToLesson,
-  onGoToAtlas
+  onGoToAtlas,
+  onGoToComparisons
 }) => {
   const [activeTab, setActiveTab] = useState<'practice' | 'simulator' | 'patterns'>('practice');
   const [sourceFilter, setSourceFilter] = useState<QuestionSourceCategory | 'all'>('all');
@@ -237,6 +239,18 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
               <BarChart2 className="h-3.5 w-3.5" />
               <span>تحليل أنماط الوزاري</span>
             </button>
+            {onGoToComparisons && (
+              <button
+                type="button"
+                onClick={() =>
+                  onGoToComparisons('disambiguation', unitFilter !== 'all' ? unitFilter : undefined)
+                }
+                className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-amber-700" />
+                <span>التخيير والتمييز بين المتشابهات</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -533,7 +547,7 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
         </section>
       )}
 
-      {activeTab === 'patterns' && <ExamPatternAnalysis />}
+      {activeTab === 'patterns' && <ExamPatternAnalysis onGoToComparisons={onGoToComparisons} />}
     </main>
   );
 };
@@ -922,23 +936,45 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
 // ================= MINISTERIAL EXAM PATTERN ANALYSIS =================
 
-const ExamPatternAnalysis: React.FC = () => {
+const ExamPatternAnalysis: React.FC<{
+  onGoToComparisons?: (tab: 'tables' | 'disambiguation', unitId?: string) => void;
+}> = ({ onGoToComparisons }) => {
   return (
     <section className="space-y-6">
       {/* Methodology Disclaimer */}
-      <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50/80 p-5 text-xs leading-relaxed text-slate-800">
-        <Info className="mt-0.5 h-5 w-5 shrink-0 text-sky-700" />
-        <div>
-          <div className="font-bold text-slate-900">
-            منهجية استقراء النماذج الوزارية الرسمية ({MINISTERIAL_BATCH_STATS.academicYear})
+      <div className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-sky-200 bg-sky-50/80 p-5 text-xs leading-relaxed text-slate-800">
+        <div className="flex max-w-3xl items-start gap-3">
+          <Info className="mt-0.5 h-5 w-5 shrink-0 text-sky-700" />
+          <div>
+            <div className="font-bold text-slate-900">
+              منهجية استقراء النماذج الوزارية الرسمية ({MINISTERIAL_BATCH_STATS.academicYear})
+            </div>
+            <p className="mt-1">
+              تم فحص <strong>{MINISTERIAL_BATCH_STATS.modelsAnalyzed} نموذجاً وزارياً</strong> رسمياً في مادة{' '}
+              {MINISTERIAL_BATCH_STATS.subjectPaper} ({MINISTERIAL_BATCH_STATS.uniqueGeographyVariants} صيغة جغرافية مستقلة)،
+              واستخراج جميع أسئلة الجغرافيا ومفاتيح تصحيحها الإلكتروني. يُستفاد من هذا التحليل في تنظيم المذاكرة ومعرفة الأوزان النسبية للوحدات،{' '}
+              <strong>دون ادعاء التنبؤ المؤكد بأسئلة الامتحانات القادمة</strong>.
+            </p>
           </div>
-          <p className="mt-1">
-            تم فحص <strong>{MINISTERIAL_BATCH_STATS.modelsAnalyzed} نموذجاً وزارياً</strong> رسمياً في مادة{' '}
-            {MINISTERIAL_BATCH_STATS.subjectPaper} ({MINISTERIAL_BATCH_STATS.uniqueGeographyVariants} صيغة جغرافية مستقلة)،
-            واستخراج جميع أسئلة الجغرافيا ومفاتيح تصحيحها الإلكتروني. يُستفاد من هذا التحليل في تنظيم المذاكرة ومعرفة الأوزان النسبية للوحدات،{' '}
-            <strong>دون ادعاء التنبؤ المؤكد بأسئلة الامتحانات القادمة</strong>.
-          </p>
         </div>
+        {onGoToComparisons && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => onGoToComparisons('tables')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+            >
+              جداول المقارنات الوزارية
+            </button>
+            <button
+              type="button"
+              onClick={() => onGoToComparisons('disambiguation')}
+              className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+            >
+              مختبر التخيير بين المتشابهات
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Real Ministerial Paper Structure */}
@@ -998,6 +1034,24 @@ const ExamPatternAnalysis: React.FC = () => {
                   <strong>أبرز الفخاخ والتمييز المطلوب: </strong>
                   {item.commonTraps}
                 </p>
+                {onGoToComparisons && (
+                  <div className="mt-2.5 flex flex-wrap gap-3 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => onGoToComparisons('tables', item.unitId)}
+                      className="font-medium text-sky-700 hover:underline"
+                    >
+                      جدول المقارنة للوحدة
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onGoToComparisons('disambiguation', item.unitId)}
+                      className="font-medium text-amber-800 hover:underline"
+                    >
+                      تخيّر وميّز متشابهات الوحدة
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

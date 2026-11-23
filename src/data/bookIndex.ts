@@ -76,7 +76,12 @@ export function searchBookContent(query: string): SearchHit[] {
     const textBlob = [
       lesson.title,
       ...lesson.objectives,
-      ...lesson.sections.flatMap((s) => [s.title, ...s.paragraphs, ...(s.bullets ?? [])]),
+      ...lesson.sections.flatMap((s) => [
+        s.title,
+        ...s.paragraphs,
+        ...(s.bullets ?? []),
+        ...(s.tables ?? []).flatMap((t) => [t.title, ...t.rows.flat()])
+      ]),
       ...lesson.keyFacts.map((f) => `${f.label} ${f.value}`)
     ].join(' ');
     if (textBlob.toLowerCase().includes(normalized)) {
