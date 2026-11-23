@@ -27,13 +27,7 @@ export default defineConfig(() => {
       },
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: [
-          'icon.svg',
-          'apple-touch-icon.png',
-          'pwa-192x192.png',
-          'pwa-512x512.png',
-          'pwa-maskable-512x512.png',
-        ],
+        includeAssets: [],
         manifest: {
           id: '/',
           name: 'كتاب الجغرافيا التفاعلي – الصف التاسع (طبعة 2026)',
@@ -45,9 +39,12 @@ export default defineConfig(() => {
           theme_color: '#0284c7',
           background_color: '#f8fafc',
           display: 'standalone',
+          display_override: ['standalone', 'minimal-ui'],
           orientation: 'any',
           start_url: '/',
           scope: '/',
+          prefer_related_applications: false,
+          categories: ['education', 'books'],
           icons: [
             {
               src: '/pwa-192x192.png',
@@ -66,6 +63,36 @@ export default defineConfig(() => {
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',
+            },
+          ],
+          shortcuts: [
+            {
+              name: 'الوحدات والدروس',
+              short_name: 'الدروس',
+              description: 'فتح مدخل الوحدات الـ 4 والدروس الـ 18',
+              url: '/?portal=units',
+              icons: [{src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png'}],
+            },
+            {
+              name: 'الأطلس التفاعلي',
+              short_name: 'الأطلس',
+              description: 'استكشاف الخرائط ثنائية وثلاثية الأبعاد',
+              url: '/?portal=atlas',
+              icons: [{src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png'}],
+            },
+            {
+              name: 'الملزمة الشاملة',
+              short_name: 'الملزمة',
+              description: 'المقارنات الوزارية والملخصات القابلة للطباعة',
+              url: '/?portal=study-guide',
+              icons: [{src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png'}],
+            },
+            {
+              name: 'التدريب والتقويم',
+              short_name: 'التدريبات',
+              description: 'الأسئلة الوزارية وبنك التدريبات التفاعلي',
+              url: '/?portal=training',
+              icons: [{src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png'}],
             },
           ],
         },

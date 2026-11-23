@@ -88,6 +88,18 @@ export default function App() {
   const [studyTabFilter, setStudyTabFilter] = useState<StudyTab | undefined>(undefined);
   const [mapLabScope, setMapLabScope] = useState<AtlasScope | undefined>(undefined);
 
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const portalParam = params.get('portal') as PortalId | null;
+    const validPortals: PortalId[] = ['home', 'units', 'atlas', 'map-lab', 'study-guide', 'training', 'audit'];
+    if (portalParam && validPortals.includes(portalParam)) {
+      setPortal(portalParam);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    // Run once on initial boot when launched via App Drawer shortcut
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const activePortal = progress.lastLocation.portal;
   const activeUnit = getUnitById(progress.lastLocation.unitId);
   const activeLesson = getLessonById(progress.lastLocation.lessonId);
