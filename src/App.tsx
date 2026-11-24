@@ -19,6 +19,10 @@ import { TrainingPortal } from './components/TrainingPortal';
 import { SearchAndBookmarksModal } from './components/SearchAndBookmarksModal';
 import { AuditReportView } from './components/AuditReportView';
 import { OfflineIndicator } from './components/PWAInstallButton';
+import { BookletScope } from './components/PrintableStudyBooklet';
+import { HiddenOwnerAnalyticsModal } from './components/HiddenOwnerAnalyticsModal';
+import { useBookletTelemetry } from './hooks/useBookletTelemetry';
+import { Users, BarChart3, LogIn, LogOut } from 'lucide-react';
 
 class PortalErrorBoundary extends React.Component<
   { children: React.ReactNode; onReset: () => void },
@@ -87,6 +91,25 @@ export default function App() {
   const [studyUnitFilter, setStudyUnitFilter] = useState<string | undefined>(undefined);
   const [studyTabFilter, setStudyTabFilter] = useState<StudyTab | undefined>(undefined);
   const [mapLabScope, setMapLabScope] = useState<AtlasScope | undefined>(undefined);
+  const [bookletScope, setBookletScope] = useState<BookletScope>('full');
+  const [ownerAnalyticsOpen, setOwnerAnalyticsOpen] = useState<boolean>(false);
+
+  const telemetry = useBookletTelemetry(bookletScope, true);
+
+  React.useEffect(() => {
+    if (!telemetry.isAdmin) {
+      setOwnerAnalyticsOpen(false);
+      return;
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'm') {
+        e.preventDefault();
+        setOwnerAnalyticsOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [telemetry.isAdmin]);
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -247,6 +270,9 @@ export default function App() {
             <StudyGuidePortal
               initialUnitId={studyUnitFilter}
               initialTab={studyTabFilter}
+              telemetry={telemetry}
+              bookletScope={bookletScope}
+              onChangeBookletScope={setBookletScope}
               onGoToLesson={openLesson}
               onGoToAtlas={openAtlasLocation}
               onGoToTraining={(unitId, lessonId) => openTraining(unitId, lessonId)}
@@ -322,6 +348,69 @@ export default function App() {
             </button>
           </div>
         </div>
+
+        {/* Public Aggregate Users & Active Count Bar at the Very Bottom of the App */}
+        <div className="border-t border-slate-100 bg-slate-50/80">
+          <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-xs sm:px-6">
+            <div className="flex flex-wrap items-center gap-5">
+              <div className="inline-flex items-center gap-1.5 text-slate-700">
+                <Users className="h-3.5 w-3.5 text-sky-700" />
+                <span>عدد المستخدمين:</span>
+                <strong className="font-mono tabular-nums text-slate-900">
+                  {telemetry.publicStats.totalUsers}
+                </strong>
+              </div>
+
+              <div
+                onDoubleClick={telemetry.isAdmin ? () => setOwnerAnalyticsOpen(true) : undefined}
+                className="inline-flex items-center gap-1.5 text-slate-700"
+              >
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                <span>النشطون الآن:</span>
+                <strong className="font-mono tabular-nums text-emerald-800">
+                  {telemetry.publicStats.activeReaders}
+                </strong>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {telemetry.user ? (
+                <>
+                  <span className="text-[11px] text-slate-500">مزامنة سحابية نشطة</span>
+                  {telemetry.isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setOwnerAnalyticsOpen(true)}
+                      aria-label="عرض تفاصيل المستخدمين"
+                      className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-100"
+                    >
+                      <BarChart3 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={telemetry.authBusy}
+                    onClick={() => void telemetry.handleSignOut()}
+                    className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    <LogOut className="h-3 w-3" />
+                    <span>خروج</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  disabled={telemetry.authBusy}
+                  onClick={() => void telemetry.handleSignIn()}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-sky-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-sky-800 hover:bg-sky-50"
+                >
+                  <LogIn className="h-3 w-3" />
+                  <span>{telemetry.authBusy ? 'جارٍ الاتصال...' : 'تسجيل الدخول للمزامنة'}</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </footer>
 
       <SearchAndBookmarksModal
@@ -336,6 +425,18 @@ export default function App() {
       />
 
       <OfflineIndicator />
+
+      {/* Hidden Owner-Only Detailed User Analytics Modal */}
+      {telemetry.isAdmin && telemetry.adminBreakdown && (
+        <HiddenOwnerAnalyticsModal
+          open={ownerAnalyticsOpen}
+          breakdown={telemetry.adminBreakdown}
+          activeList={telemetry.adminPresenceList}
+          userProfiles={telemetry.adminUserProfiles}
+          downloadLogs={telemetry.adminDownloadLogs}
+          onClose={() => setOwnerAnalyticsOpen(false)}
+        />
+      )}
     </div>
   );
 }

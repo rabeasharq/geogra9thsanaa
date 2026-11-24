@@ -1,0 +1,302 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'rabeasharq2024@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidScope(scope) {
+      return scope is string && scope in ['full', 'unit-1', 'unit-2', 'unit-3', 'unit-4', 'maps-tables'];
+    }
+
+    function isValidDownloadMode(mode) {
+      return mode is string && mode in ['encrypted_offline', 'pdf_print'];
+    }
+
+    function isValidDeviceType(device) {
+      return device is string && device in ['mobile', 'tablet', 'desktop'];
+    }
+
+    function isValidAppMode(appMode) {
+      return appMode is string && appMode in ['pwa', 'web'];
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidBookletStats(data) {
+      return data.keys().hasAll(['totalDownloads', 'encryptedSaves', 'pdfPrints', 'activeReaders', 'updatedAt'])
+        && data.keys().hasOnly(['totalDownloads', 'encryptedSaves', 'pdfPrints', 'activeReaders', 'totalUsers', 'updatedAt'])
+        && data.totalDownloads is int && data.totalDownloads >= 0
+        && data.encryptedSaves is int && data.encryptedSaves >= 0
+        && data.pdfPrints is int && data.pdfPrints >= 0
+        && data.activeReaders is int && data.activeReaders >= 0
+        && (!('totalUsers' in data) || (data.totalUsers is int && data.totalUsers >= 0))
+        && data.totalDownloads == data.encryptedSaves + data.pdfPrints
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidStatsDownloadIncrement(next, prev) {
+      return next.activeReaders == prev.activeReaders
+        && next.get('totalUsers', 0) == prev.get('totalUsers', 0)
+        && next.totalDownloads == prev.totalDownloads + 1
+        && (
+          (next.encryptedSaves == prev.encryptedSaves + 1 && next.pdfPrints == prev.pdfPrints) ||
+          (next.pdfPrints == prev.pdfPrints + 1 && next.encryptedSaves == prev.encryptedSaves)
+        );
+    }
+
+    function isValidStatsPresenceDelta(next, prev) {
+      return next.totalDownloads == prev.totalDownloads
+        && next.encryptedSaves == prev.encryptedSaves
+        && next.pdfPrints == prev.pdfPrints
+        && next.get('totalUsers', 0) == prev.get('totalUsers', 0)
+        && (
+          next.activeReaders == prev.activeReaders + 1 ||
+          (prev.activeReaders > 0 && next.activeReaders == prev.activeReaders - 1)
+        );
+    }
+
+    function isValidStatsNewUserIncrement(next, prev) {
+      return next.totalDownloads == prev.totalDownloads
+        && next.encryptedSaves == prev.encryptedSaves
+        && next.pdfPrints == prev.pdfPrints
+        && next.activeReaders == prev.activeReaders
+        && next.get('totalUsers', 0) == prev.get('totalUsers', 0) + 1
+        && !exists(/databases/$(database)/documents/booklet_user_profiles/$(request.auth.uid))
+        && existsAfter(/databases/$(database)/documents/booklet_user_profiles/$(request.auth.uid));
+    }
+
+    function isValidPresence(data, sessionId) {
+      return data.keys().hasAll([
+          'sessionId', 'ownerUid', 'displayName', 'email',
+          'deviceType', 'appMode', 'scope', 'isActive', 'createdAt', 'lastSeen'
+        ])
+        && data.keys().hasOnly([
+          'sessionId', 'ownerUid', 'displayName', 'email',
+          'deviceType', 'appMode', 'scope', 'isActive', 'createdAt', 'lastSeen'
+        ])
+        && data.sessionId == sessionId
+        && isValidId(data.sessionId)
+        && data.ownerUid is string && data.ownerUid == request.auth.uid
+        && data.displayName is string && data.displayName.size() <= 120
+        && data.email is string && data.email.size() <= 160
+        && isValidDeviceType(data.deviceType)
+        && isValidAppMode(data.appMode)
+        && isValidScope(data.scope)
+        && data.isActive is bool
+        && data.createdAt is timestamp
+        && data.lastSeen is timestamp;
+    }
+
+    function isValidDownloadLog(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'displayName', 'email', 'deviceType', 'appMode', 'scope', 'mode', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'displayName', 'email', 'deviceType', 'appMode', 'scope', 'mode', 'createdAt'
+        ])
+        && data.ownerUid is string && data.ownerUid == request.auth.uid
+        && data.displayName is string && data.displayName.size() <= 120
+        && data.email is string && data.email.size() <= 160
+        && isValidDeviceType(data.deviceType)
+        && isValidAppMode(data.appMode)
+        && isValidScope(data.scope)
+        && isValidDownloadMode(data.mode)
+        && data.createdAt == request.time;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+          'uid', 'displayName', 'email', 'deviceType', 'appMode',
+          'downloadsCount', 'encryptedSavesCount', 'pdfPrintsCount',
+          'lastScope', 'firstSeenAt', 'lastActiveAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'displayName', 'email', 'deviceType', 'appMode',
+          'downloadsCount', 'encryptedSavesCount', 'pdfPrintsCount',
+          'lastScope', 'firstSeenAt', 'lastActiveAt'
+        ])
+        && data.uid == userId
+        && isValidId(data.uid)
+        && data.displayName is string && data.displayName.size() <= 120
+        && data.email is string && data.email.size() <= 160
+        && isValidDeviceType(data.deviceType)
+        && isValidAppMode(data.appMode)
+        && data.downloadsCount is int && data.downloadsCount >= 0
+        && data.encryptedSavesCount is int && data.encryptedSavesCount >= 0
+        && data.pdfPrintsCount is int && data.pdfPrintsCount >= 0
+        && data.downloadsCount == data.encryptedSavesCount + data.pdfPrintsCount
+        && isValidScope(data.lastScope)
+        && data.firstSeenAt is timestamp
+        && data.lastActiveAt is timestamp;
+    }
+
+    function isValidAdminDoc(data, userId) {
+      return data.keys().hasAll(['uid', 'role', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'role', 'createdAt'])
+        && data.uid == userId
+        && isValidId(data.uid)
+        && data.role == 'admin'
+        && data.createdAt == request.time;
+    }
+
+    // 4. Collection Match Blocks
+    match /test/{docId} {
+      allow get: if docId == 'connection';
+      allow list, write: if false;
+    }
+
+    match /booklet_stats/{statId} {
+      // Single non-PII aggregate counters doc readable publicly
+      allow get: if isValidId(statId) && statId == 'global';
+      allow list: if false;
+
+      allow create: if isVerifiedUser()
+        && isValidId(statId)
+        && statId == 'global'
+        && isValidBookletStats(incoming())
+        && incoming().totalDownloads <= 1
+        && incoming().activeReaders <= 1
+        && incoming().get('totalUsers', 0) <= 1
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedUser()
+        && isValidId(statId)
+        && statId == 'global'
+        && isValidBookletStats(incoming())
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'totalDownloads', 'encryptedSaves', 'pdfPrints', 'activeReaders', 'totalUsers', 'updatedAt'
+        ])
+        && (
+          isAdmin() ||
+          isValidStatsDownloadIncrement(incoming(), existing()) ||
+          isValidStatsPresenceDelta(incoming(), existing()) ||
+          isValidStatsNewUserIncrement(incoming(), existing())
+        );
+
+      allow delete: if false;
+    }
+
+    match /booklet_presence/{sessionId} {
+      // PII-isolated: only owner or admin can read/list detailed user sessions
+      allow get: if isSignedIn() && isValidId(sessionId) && (
+        isAdmin() ||
+        existing().ownerUid == request.auth.uid
+      );
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.ownerUid == request.auth.uid
+      );
+
+      allow create: if isVerifiedUser()
+        && isValidId(sessionId)
+        && isValidPresence(incoming(), sessionId)
+        && incoming().createdAt == request.time
+        && incoming().lastSeen == request.time;
+
+      allow update: if isVerifiedUser()
+        && isValidId(sessionId)
+        && isValidPresence(incoming(), sessionId)
+        && existing().ownerUid == request.auth.uid
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().sessionId == existing().sessionId
+        && incoming().createdAt == existing().createdAt
+        && incoming().lastSeen == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'email', 'deviceType', 'appMode', 'scope', 'isActive', 'lastSeen'
+        ]);
+
+      allow delete: if isVerifiedUser()
+        && isValidId(sessionId)
+        && (existing().ownerUid == request.auth.uid || isAdmin());
+    }
+
+    match /booklet_download_logs/{logId} {
+      // Strictly owner or admin
+      allow get: if isSignedIn() && isValidId(logId) && (
+        isAdmin() ||
+        existing().ownerUid == request.auth.uid
+      );
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.ownerUid == request.auth.uid
+      );
+
+      allow create: if isVerifiedUser()
+        && isValidId(logId)
+        && isValidDownloadLog(incoming());
+
+      allow update, delete: if false;
+    }
+
+    match /booklet_user_profiles/{userId} {
+      // Strictly owner (for self) or admin (for full directory)
+      allow get: if isSignedIn() && isValidId(userId) && (
+        isAdmin() ||
+        request.auth.uid == userId
+      );
+      allow list: if isAdmin();
+
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidUserProfile(incoming(), userId)
+        && incoming().firstSeenAt == request.time
+        && incoming().lastActiveAt == request.time
+        && incoming().downloadsCount <= 1;
+
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().firstSeenAt == existing().firstSeenAt
+        && incoming().lastActiveAt == request.time
+        && incoming().downloadsCount >= existing().downloadsCount
+        && incoming().downloadsCount <= existing().downloadsCount + 1
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'email', 'deviceType', 'appMode',
+          'downloadsCount', 'encryptedSavesCount', 'pdfPrintsCount',
+          'lastScope', 'lastActiveAt'
+        ]);
+
+      allow delete: if false;
+    }
+
+    match /admins/{userId} {
+      allow get: if isAdmin() && isValidId(userId);
+      allow list: if false;
+      allow create: if isAdmin() && isValidId(userId) && isValidAdminDoc(incoming(), userId);
+      allow update, delete: if false;
+    }
+  }
+}

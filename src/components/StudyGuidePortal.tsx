@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ALL_CONCEPTS, TEXTBOOK_UNITS, getUnitById } from '../data/bookIndex';
 import {
   COMPARISON_CATEGORIES,
@@ -8,7 +8,15 @@ import {
 import { MinisterialDisambiguationLab } from './MinisterialDisambiguationLab';
 import { SideBySideComparator } from './SideBySideComparator';
 import { BookletScope, PrintableStudyBooklet } from './PrintableStudyBooklet';
-import { downloadStandaloneOfflineBookletHtml } from '../utils/exportOfflineBooklet';
+import { BookletReaderModal } from './BookletReaderModal';
+import {
+  deleteEncryptedBookletPackage,
+  EncryptedVaultMetadata,
+  listEncryptedBookletPackages,
+  loadEncryptedBookletPackage,
+  saveEncryptedBookletPackage
+} from '../utils/encryptedOfflineVault';
+import { BookletTelemetryHandle } from '../hooks/useBookletTelemetry';
 import {
   Printer,
   BookOpen,
@@ -18,8 +26,12 @@ import {
   GitBranch,
   ArrowLeftRight,
   MapPin,
+  FileText,
+  Lock,
+  ShieldCheck,
   Download,
-  FileText
+  Maximize2,
+  Trash2
 } from 'lucide-react';
 
 export type StudyTab =
@@ -34,6 +46,9 @@ export type StudyTab =
 interface StudyGuidePortalProps {
   initialUnitId?: string;
   initialTab?: StudyTab;
+  telemetry: BookletTelemetryHandle;
+  bookletScope: BookletScope;
+  onChangeBookletScope: (scope: BookletScope) => void;
   onGoToLesson: (unitId: string, lessonId: string) => void;
   onGoToAtlas: (locationId: string) => void;
   onGoToTraining: (unitId: string, lessonId?: string) => void;
@@ -42,6 +57,9 @@ interface StudyGuidePortalProps {
 export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   initialUnitId,
   initialTab,
+  telemetry,
+  bookletScope,
+  onChangeBookletScope,
   onGoToLesson,
   onGoToAtlas,
   onGoToTraining
@@ -52,11 +70,16 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   const [tableSearch, setTableSearch] = useState('');
   const [tableCategory, setTableCategory] = useState<ComparisonCategoryId>('all');
   const [expandedTableNotes, setExpandedTableNotes] = useState<Record<string, boolean>>({});
-  const [bookletScope, setBookletScope] = useState<BookletScope>('full');
   const [includeBlankMaps, setIncludeBlankMaps] = useState<boolean>(true);
   const [includeQuizKey, setIncludeQuizKey] = useState<boolean>(true);
-  const [downloadNotice, setDownloadNotice] = useState<string | null>(null);
-  const bookletRef = useRef<HTMLDivElement | null>(null);
+  const [readerModalOpen, setReaderModalOpen] = useState<boolean>(false);
+  const [vaultPackages, setVaultPackages] = useState<EncryptedVaultMetadata[]>([]);
+  const [savingEncrypted, setSavingEncrypted] = useState<boolean>(false);
+  const [vaultMessage, setVaultMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    void listEncryptedBookletPackages().then(setVaultPackages);
+  }, []);
 
   React.useEffect(() => {
     if (initialUnitId) {
@@ -67,10 +90,10 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
         initialUnitId === 'unit-3' ||
         initialUnitId === 'unit-4'
       ) {
-        setBookletScope(initialUnitId);
+        onChangeBookletScope(initialUnitId);
       }
     }
-  }, [initialUnitId]);
+  }, [initialUnitId, onChangeBookletScope]);
 
   React.useEffect(() => {
     if (initialTab) setActiveTab(initialTab);
@@ -170,27 +193,44 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
     return matchingTablesBeforeCategory.filter((t) => t.category === tableCategory);
   }, [matchingTablesBeforeCategory, tableCategory]);
 
+  const currentVaultMeta = vaultPackages.find((v) => v.scope === bookletScope);
+
   const handlePrintPdf = () => {
+    void telemetry.recordBookletAction(bookletScope, 'pdf_print');
     window.print();
   };
 
-  const handleDownloadOfflineHtml = () => {
-    if (!bookletRef.current) return;
-    const scopeNameMap: Record<BookletScope, string> = {
-      full: 'الملزمة-الشاملة-كاملة-جغرافيا-تاسع-2026.html',
-      'unit-1': 'ملزمة-الوحدة-1-جغرافيا-تاسع-2026.html',
-      'unit-2': 'ملزمة-الوحدة-2-جغرافيا-تاسع-2026.html',
-      'unit-3': 'ملزمة-الوحدة-3-جغرافيا-تاسع-2026.html',
-      'unit-4': 'ملزمة-الوحدة-4-جغرافيا-تاسع-2026.html',
-      'maps-tables': 'كتيب-الخرائط-والمقارنات-جغرافيا-تاسع-2026.html'
-    };
-    const ok = downloadStandaloneOfflineBookletHtml(bookletRef.current, scopeNameMap[bookletScope]);
-    if (ok) {
-      setDownloadNotice(
-        'تم تنزيل نسخة الملزمة أوفلاين (ملف HTML مستقل بالخرائط والجداول) — يمكنك فتحها أو طباعتها من أي هاتف أو حاسوب دون إنترنت.'
+  const handleSaveEncryptedOffline = async () => {
+    setSavingEncrypted(true);
+    try {
+      const meta = await saveEncryptedBookletPackage(bookletScope);
+      const updated = await listEncryptedBookletPackages();
+      setVaultPackages(updated);
+      await telemetry.recordBookletAction(bookletScope, 'encrypted_offline');
+      setVaultMessage(
+        `تم تشفير وحفظ الملزمة محلياً داخل التطبيق (${meta.algorithm} · ${(meta.byteSize / 1024).toFixed(1)} ك.ب · بصمة ${meta.sha256.slice(0, 8)}).`
       );
-      setTimeout(() => setDownloadNotice(null), 6500);
+      setTimeout(() => setVaultMessage(null), 6500);
+    } catch (err) {
+      setVaultMessage(err instanceof Error ? err.message : 'تعذر حفظ النسخة المشفرة.');
+    } finally {
+      setSavingEncrypted(false);
     }
+  };
+
+  const handleVerifyEncryptedPackage = async (targetScope: BookletScope): Promise<string | null> => {
+    try {
+      const res = await loadEncryptedBookletPackage(targetScope);
+      if (!res) return 'لا توجد نسخة مشفرة محفوظة لهذا النطاق.';
+      return `تم فك التشفير والتحقق بنجاح (${res.meta.algorithm}) — ${res.payload.unitIds.length} وحدات، ${res.payload.mapIds.length} خرائط، ${res.payload.tableIds.length} جداول، البصمة ${res.meta.sha256.slice(0, 10)} سليمة 100%.`;
+    } catch (err) {
+      return err instanceof Error ? err.message : 'فشل التحقق من سلامة الملف المشفر.';
+    }
+  };
+
+  const handleDeleteEncryptedPackage = async (targetScope: BookletScope) => {
+    await deleteEncryptedBookletPackage(targetScope);
+    setVaultPackages(await listEncryptedBookletPackages());
   };
 
   const tabs: { id: StudyTab; label: string }[] = [
@@ -200,7 +240,7 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
     { id: 'disambiguation', label: 'التخيير والتمييز بين المتشابهات' },
     { id: 'formulas', label: 'القوانين والأرقام القياسية' },
     { id: 'mindmaps', label: 'الخرائط الذهنية السببية' },
-    { id: 'booklet', label: 'كتيّب الطباعة والتحميل (مع الخرائط)' }
+    { id: 'booklet', label: 'كتيّب الملزمة والطباعة (مع الخرائط)' }
   ];
 
   return (
@@ -220,11 +260,21 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={handleDownloadOfflineHtml}
+              onClick={() => setReaderModalOpen(true)}
               className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-sky-200 bg-sky-50 px-3.5 py-2.5 text-xs font-semibold text-sky-900 transition-colors hover:bg-sky-100"
             >
-              <Download className="h-4 w-4" />
-              <span>تحميل أوفلاين (HTML شامل)</span>
+              <Maximize2 className="h-4 w-4" />
+              <span>فتح نافذة الملزمة داخل التطبيق</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={savingEncrypted}
+              onClick={() => void handleSaveEncryptedOffline()}
+              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs font-semibold text-emerald-900 transition-colors hover:bg-emerald-100 disabled:opacity-60"
+            >
+              <Lock className="h-4 w-4" />
+              <span>{savingEncrypted ? 'جارٍ التشفير...' : 'حفظ مشفّر أوفلاين (AES-256)'}</span>
             </button>
 
             <button
@@ -238,9 +288,30 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
           </div>
         </div>
 
-        {downloadNotice && (
+        {/* Public Downloads Total & Local Encrypted Offline Vault Strip */}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50/70 px-4 py-2.5 text-xs">
+          <div className="flex flex-wrap items-center gap-5">
+            <div className="inline-flex items-center gap-1.5 text-slate-700">
+              <Download className="h-3.5 w-3.5 text-sky-700" />
+              <span>إجمالي عدد مرات التحميل:</span>
+              <strong className="font-mono tabular-nums text-slate-900">
+                {telemetry.publicStats.totalDownloads}
+              </strong>
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 text-slate-700">
+              <ShieldCheck className="h-3.5 w-3.5 text-amber-700" />
+              <span>الحزم المشفرة على جهازك:</span>
+              <strong className="font-mono tabular-nums text-slate-900">
+                {vaultPackages.length}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        {vaultMessage && (
           <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-medium text-emerald-900">
-            {downloadNotice}
+            {vaultMessage}
           </div>
         )}
 
@@ -861,20 +932,29 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
               <div>
                 <h2 className="font-display flex items-center gap-2 text-base font-extrabold text-slate-900">
                   <FileText className="h-4 w-4 text-sky-700" />
-                  <span>مُجهّز كتيّب الملزمة للطباعة الورقية والتحميل بدون إنترنت</span>
+                  <span>مُجهّز كتيّب الملزمة والنافذة الداخلية والحفظ المشفّر</span>
                 </h2>
                 <p className="mt-1 text-xs text-slate-700">
-                  اختر نطاق الملزمة ثم اضغط «طباعة / تصدير الكتيّب PDF» للحفظ على ورق A4، أو «تحميل أوفلاين (HTML شامل)» لإرسال الملف وفتحه على أي جهاز بدون إنترنت.
+                  اختر نطاق الملزمة لقراءتها في نافذة مستقلة داخل التطبيق، أو حفظها مشفّرة داخل المخزن المحلي (AES-GCM-256) للعمل بدون إنترنت، أو طباعتها على ورق A4.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={handleDownloadOfflineHtml}
-                  className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-100"
+                  onClick={() => setReaderModalOpen(true)}
+                  className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-sky-300 bg-white px-3.5 py-2 text-xs font-semibold text-sky-900 hover:bg-sky-100"
                 >
-                  <Download className="h-3.5 w-3.5 text-sky-700" />
-                  <span>تحميل ملف أوفلاين (.HTML)</span>
+                  <Maximize2 className="h-3.5 w-3.5 text-sky-700" />
+                  <span>نافذة قراءة داخل التطبيق</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={savingEncrypted}
+                  onClick={() => void handleSaveEncryptedOffline()}
+                  className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 disabled:opacity-60"
+                >
+                  <Lock className="h-3.5 w-3.5 text-emerald-700" />
+                  <span>{savingEncrypted ? 'جارٍ التشفير...' : 'حفظ مشفّر أوفلاين'}</span>
                 </button>
                 <button
                   type="button"
@@ -901,7 +981,7 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
                 <button
                   key={opt.id}
                   type="button"
-                  onClick={() => setBookletScope(opt.id)}
+                  onClick={() => onChangeBookletScope(opt.id)}
                   className={`min-h-[36px] whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
                     bookletScope === opt.id
                       ? 'border-sky-600 bg-sky-600 text-white'
@@ -933,6 +1013,52 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
                 <span>تضمين الأسئلة الوزارية الختامية وملحق الإجابات</span>
               </label>
             </div>
+
+            {/* Saved Encrypted Offline Vault List */}
+            {vaultPackages.length > 0 && (
+              <div className="rounded-lg border border-emerald-200 bg-white p-3 text-xs">
+                <div className="mb-2 flex items-center gap-1.5 font-bold text-emerald-900">
+                  <Lock className="h-3.5 w-3.5" />
+                  <span>خزنة الملفات المشفرة على جهازك ({vaultPackages.length}):</span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {vaultPackages.map((pkg) => (
+                    <div
+                      key={pkg.scope}
+                      className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate font-semibold text-slate-900">{pkg.title}</div>
+                        <div className="font-mono text-[10px] text-slate-500">
+                          {pkg.algorithm} · {(pkg.byteSize / 1024).toFixed(1)} KB · SHA {pkg.sha256.slice(0, 8)}
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const msg = await handleVerifyEncryptedPackage(pkg.scope);
+                            if (msg) setVaultMessage(msg);
+                          }}
+                          className="rounded border border-sky-200 bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-800 hover:bg-sky-100"
+                        >
+                          فحص
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`حذف الحزمة المشفرة ${pkg.title}`}
+                          onClick={() => void handleDeleteEncryptedPackage(pkg.scope)}
+                          className="rounded border border-rose-200 bg-rose-50 p-1 text-rose-700 hover:bg-rose-100"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
           </section>
         )}
 
@@ -940,9 +1066,24 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
           scope={bookletScope}
           includeBlankMaps={includeBlankMaps}
           includeQuizKey={includeQuizKey}
-          containerRef={bookletRef}
         />
       </div>
+
+      {/* Dedicated In-App Booklet Reader Window */}
+      <BookletReaderModal
+        open={readerModalOpen}
+        scope={bookletScope}
+        includeBlankMaps={includeBlankMaps}
+        includeQuizKey={includeQuizKey}
+        savedVaultMeta={currentVaultMeta}
+        stats={telemetry.publicStats}
+        savingEncrypted={savingEncrypted}
+        onChangeScope={onChangeBookletScope}
+        onSaveEncrypted={handleSaveEncryptedOffline}
+        onVerifyDecryption={() => handleVerifyEncryptedPackage(bookletScope)}
+        onPrintPdf={handlePrintPdf}
+        onClose={() => setReaderModalOpen(false)}
+      />
     </main>
   );
 };

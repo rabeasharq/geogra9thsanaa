@@ -1,0 +1,248 @@
+{
+  "entities": {
+    "BookletStats": {
+      "title": "BookletStats",
+      "description": "Aggregate non-PII counters for Study Booklet downloads and current active readers.",
+      "type": "object",
+      "properties": {
+        "totalDownloads": {
+          "type": "integer",
+          "description": "Total number of booklet downloads (encrypted offline saves + PDF prints)."
+        },
+        "encryptedSaves": {
+          "type": "integer",
+          "description": "Total number of AES-GCM encrypted offline booklet saves inside the app."
+        },
+        "pdfPrints": {
+          "type": "integer",
+          "description": "Total number of A4 PDF print/export actions."
+        },
+        "activeReaders": {
+          "type": "integer",
+          "description": "Aggregate count of currently active users in the app."
+        },
+        "totalUsers": {
+          "type": "integer",
+          "description": "Aggregate count of cumulative registered/synced users across the app."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last counter update."
+        }
+      },
+      "required": ["totalDownloads", "encryptedSaves", "pdfPrints", "activeReaders", "updatedAt"]
+    },
+    "BookletPresence": {
+      "title": "BookletPresence",
+      "description": "Detailed active reader session inside the Study Booklet (visible only to owner and admin).",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "ownerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "deviceType": {
+          "type": "string",
+          "enum": ["mobile", "tablet", "desktop"]
+        },
+        "appMode": {
+          "type": "string",
+          "enum": ["pwa", "web"]
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["full", "unit-1", "unit-2", "unit-3", "unit-4", "maps-tables"]
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "sessionId",
+        "ownerUid",
+        "displayName",
+        "email",
+        "deviceType",
+        "appMode",
+        "scope",
+        "isActive",
+        "createdAt",
+        "lastSeen"
+      ]
+    },
+    "BookletDownloadLog": {
+      "title": "BookletDownloadLog",
+      "description": "Detailed download/print event log visible only to owner and admin.",
+      "type": "object",
+      "properties": {
+        "ownerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "deviceType": {
+          "type": "string",
+          "enum": ["mobile", "tablet", "desktop"]
+        },
+        "appMode": {
+          "type": "string",
+          "enum": ["pwa", "web"]
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["full", "unit-1", "unit-2", "unit-3", "unit-4", "maps-tables"]
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["encrypted_offline", "pdf_print"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerUid", "displayName", "email", "deviceType", "appMode", "scope", "mode", "createdAt"]
+    },
+    "BookletUserProfile": {
+      "title": "BookletUserProfile",
+      "description": "Cumulative reader profile & device telemetry visible only to the user and hidden admin analytics.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "deviceType": {
+          "type": "string",
+          "enum": ["mobile", "tablet", "desktop"]
+        },
+        "appMode": {
+          "type": "string",
+          "enum": ["pwa", "web"]
+        },
+        "downloadsCount": {
+          "type": "integer"
+        },
+        "encryptedSavesCount": {
+          "type": "integer"
+        },
+        "pdfPrintsCount": {
+          "type": "integer"
+        },
+        "lastScope": {
+          "type": "string",
+          "enum": ["full", "unit-1", "unit-2", "unit-3", "unit-4", "maps-tables"]
+        },
+        "firstSeenAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastActiveAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "email",
+        "deviceType",
+        "appMode",
+        "downloadsCount",
+        "encryptedSavesCount",
+        "pdfPrintsCount",
+        "lastScope",
+        "firstSeenAt",
+        "lastActiveAt"
+      ]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Explicit admin allowlist entry for hidden owner analytics.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/booklet_stats/{statId}": {
+      "schema": { "$ref": "#/entities/BookletStats" },
+      "description": "Public aggregate total downloads and active readers count (doc 'global', zero PII)."
+    },
+    "/booklet_presence/{sessionId}": {
+      "schema": { "$ref": "#/entities/BookletPresence" },
+      "description": "Detailed active reader sessions visible only to owner and hidden admin."
+    },
+    "/booklet_download_logs/{logId}": {
+      "schema": { "$ref": "#/entities/BookletDownloadLog" },
+      "description": "Detailed download/print logs visible only to owner and hidden admin."
+    },
+    "/booklet_user_profiles/{userId}": {
+      "schema": { "$ref": "#/entities/BookletUserProfile" },
+      "description": "Per-user cumulative booklet telemetry visible only to owner and hidden admin."
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Authorized admin role registry."
+    }
+  }
+}
