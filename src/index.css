@@ -138,6 +138,8 @@ html[data-theme="night"] .text-slate-500 {
 
 /* Soft contextual cards in Night Mode */
 html[data-theme="night"] .bg-sky-50,
+html[data-theme="night"] .bg-sky-50\/40,
+html[data-theme="night"] .bg-sky-50\/50,
 html[data-theme="night"] .bg-sky-50\/70,
 html[data-theme="night"] .bg-sky-50\/80 {
   background-color: rgba(14, 116, 144, 0.2) !important;
@@ -259,29 +261,50 @@ html[data-theme="night"] ::-webkit-scrollbar-thumb {
   background: #94a3b8;
 }
 
-/* Print stylesheet for Study Guide PDF Export */
+.print-booklet-only {
+  display: none;
+}
+
+/* Print stylesheet for Study Guide A4 Booklet PDF Export */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 16mm 14mm;
+    margin: 13mm 12mm 15mm 12mm;
   }
 
   html {
     font-size: 100% !important;
   }
 
+  html[data-theme="night"] body,
+  html[data-theme="reading"] body,
   body {
     background: #ffffff !important;
     color: #0f172a !important;
-    font-size: 11pt !important;
+    font-size: 10.5pt !important;
     line-height: 1.65 !important;
+  }
+
+  html[data-theme="night"] .bg-white,
+  html[data-theme="night"] .bg-slate-50,
+  html[data-theme="reading"] .bg-white,
+  html[data-theme="reading"] .bg-slate-50 {
+    background-color: #ffffff !important;
+  }
+
+  html[data-theme="night"] .text-slate-900,
+  html[data-theme="night"] .text-slate-800,
+  html[data-theme="night"] .text-slate-700,
+  html[data-theme="night"] .text-slate-600 {
+    color: #0f172a !important;
   }
 
   .no-print {
     display: none !important;
   }
 
-  .print-only {
+  .print-only,
+  .print-booklet-only {
     display: block !important;
   }
 
@@ -295,13 +318,27 @@ html[data-theme="night"] ::-webkit-scrollbar-thumb {
     page-break-before: always;
   }
 
+  .print-break-after {
+    break-after: page;
+    page-break-after: always;
+  }
+
   table {
     border-collapse: collapse !important;
     width: 100% !important;
   }
 
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   th, td {
     border: 1px solid #cbd5e1 !important;
-    padding: 6px 8px !important;
+    padding: 5px 8px !important;
   }
 }

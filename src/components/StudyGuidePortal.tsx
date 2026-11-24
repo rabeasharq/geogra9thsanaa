@@ -1,8 +1,26 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { ALL_CONCEPTS, TEXTBOOK_UNITS, getUnitById } from '../data/bookIndex';
-import { MINISTERIAL_COMPARATIVE_TABLES } from '../data/ministerialComparisons';
+import {
+  COMPARISON_CATEGORIES,
+  ComparisonCategoryId,
+  MINISTERIAL_COMPARATIVE_TABLES
+} from '../data/ministerialComparisons';
 import { MinisterialDisambiguationLab } from './MinisterialDisambiguationLab';
-import { Printer, BookOpen, Compass, CheckSquare, Search, GitBranch, ArrowLeftRight } from 'lucide-react';
+import { SideBySideComparator } from './SideBySideComparator';
+import { BookletScope, PrintableStudyBooklet } from './PrintableStudyBooklet';
+import { downloadStandaloneOfflineBookletHtml } from '../utils/exportOfflineBooklet';
+import {
+  Printer,
+  BookOpen,
+  Compass,
+  CheckSquare,
+  Search,
+  GitBranch,
+  ArrowLeftRight,
+  MapPin,
+  Download,
+  FileText
+} from 'lucide-react';
 
 export type StudyTab =
   | 'summary'
@@ -10,7 +28,8 @@ export type StudyTab =
   | 'tables'
   | 'disambiguation'
   | 'formulas'
-  | 'mindmaps';
+  | 'mindmaps'
+  | 'booklet';
 
 interface StudyGuidePortalProps {
   initialUnitId?: string;
@@ -31,10 +50,26 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   const [unitFilter, setUnitFilter] = useState<string>(initialUnitId || 'all');
   const [searchTerm, setSearchTerm] = useState('');
   const [tableSearch, setTableSearch] = useState('');
+  const [tableCategory, setTableCategory] = useState<ComparisonCategoryId>('all');
   const [expandedTableNotes, setExpandedTableNotes] = useState<Record<string, boolean>>({});
+  const [bookletScope, setBookletScope] = useState<BookletScope>('full');
+  const [includeBlankMaps, setIncludeBlankMaps] = useState<boolean>(true);
+  const [includeQuizKey, setIncludeQuizKey] = useState<boolean>(true);
+  const [downloadNotice, setDownloadNotice] = useState<string | null>(null);
+  const bookletRef = useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
-    if (initialUnitId) setUnitFilter(initialUnitId);
+    if (initialUnitId) {
+      setUnitFilter(initialUnitId);
+      if (
+        initialUnitId === 'unit-1' ||
+        initialUnitId === 'unit-2' ||
+        initialUnitId === 'unit-3' ||
+        initialUnitId === 'unit-4'
+      ) {
+        setBookletScope(initialUnitId);
+      }
+    }
   }, [initialUnitId]);
 
   React.useEffect(() => {
@@ -99,7 +134,7 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
     );
   }, [filteredUnits]);
 
-  const filteredMinisterialTables = useMemo(() => {
+  const matchingTablesBeforeCategory = useMemo(() => {
     const q = tableSearch.trim().toLowerCase();
     return MINISTERIAL_COMPARATIVE_TABLES.filter((t) => {
       const unitOk = unitFilter === 'all' || t.unitId === unitFilter;
@@ -113,8 +148,49 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
     });
   }, [unitFilter, tableSearch]);
 
+  const tableCategoryCounts = useMemo(() => {
+    const counts: Record<ComparisonCategoryId, number> = {
+      all: matchingTablesBeforeCategory.length,
+      minerals_energy: 0,
+      factories_industry: 0,
+      airports_ports: 0,
+      terrain_wadis_dams: 0,
+      agri_coffee_wealth: 0,
+      tourism_landmarks: 0,
+      population_density: 0
+    };
+    for (const t of matchingTablesBeforeCategory) {
+      counts[t.category] += 1;
+    }
+    return counts;
+  }, [matchingTablesBeforeCategory]);
+
+  const filteredMinisterialTables = useMemo(() => {
+    if (tableCategory === 'all') return matchingTablesBeforeCategory;
+    return matchingTablesBeforeCategory.filter((t) => t.category === tableCategory);
+  }, [matchingTablesBeforeCategory, tableCategory]);
+
   const handlePrintPdf = () => {
     window.print();
+  };
+
+  const handleDownloadOfflineHtml = () => {
+    if (!bookletRef.current) return;
+    const scopeNameMap: Record<BookletScope, string> = {
+      full: 'الملزمة-الشاملة-كاملة-جغرافيا-تاسع-2026.html',
+      'unit-1': 'ملزمة-الوحدة-1-جغرافيا-تاسع-2026.html',
+      'unit-2': 'ملزمة-الوحدة-2-جغرافيا-تاسع-2026.html',
+      'unit-3': 'ملزمة-الوحدة-3-جغرافيا-تاسع-2026.html',
+      'unit-4': 'ملزمة-الوحدة-4-جغرافيا-تاسع-2026.html',
+      'maps-tables': 'كتيب-الخرائط-والمقارنات-جغرافيا-تاسع-2026.html'
+    };
+    const ok = downloadStandaloneOfflineBookletHtml(bookletRef.current, scopeNameMap[bookletScope]);
+    if (ok) {
+      setDownloadNotice(
+        'تم تنزيل نسخة الملزمة أوفلاين (ملف HTML مستقل بالخرائط والجداول) — يمكنك فتحها أو طباعتها من أي هاتف أو حاسوب دون إنترنت.'
+      );
+      setTimeout(() => setDownloadNotice(null), 6500);
+    }
   };
 
   const tabs: { id: StudyTab; label: string }[] = [
@@ -123,7 +199,8 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
     { id: 'tables', label: 'الجداول والمقارنات الوزارية' },
     { id: 'disambiguation', label: 'التخيير والتمييز بين المتشابهات' },
     { id: 'formulas', label: 'القوانين والأرقام القياسية' },
-    { id: 'mindmaps', label: 'الخرائط الذهنية السببية' }
+    { id: 'mindmaps', label: 'الخرائط الذهنية السببية' },
+    { id: 'booklet', label: 'كتيّب الطباعة والتحميل (مع الخرائط)' }
   ];
 
   return (
@@ -136,19 +213,36 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
               الملزمة الشاملة لكتاب الجغرافيا – الصف التاسع الأساسي
             </h1>
             <p className="mt-1 text-xs leading-relaxed text-slate-600">
-              ملزمة منظمة تستوعب كافة تفاصيل الوحدات الأربع والدروس الـ 18 دون إسقاط، مع إحالات دقيقة للوحدة والدرس والصفحة وإمكانية الطباعة والتصدير إلى PDF.
+              ملزمة منظمة تستوعب كافة تفاصيل الوحدات الأربع والدروس الـ 18 مدعّمة بالخرائط المدمجة والصماء والجداول المستقلة، إعداد أ. إبراهيم أحمد متاش ومراجعة أ. مجدي محمد النوفاني.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handlePrintPdf}
-            className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
-          >
-            <Printer className="h-4 w-4" />
-            <span>طباعة / تصدير الملزمة PDF</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDownloadOfflineHtml}
+              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-sky-200 bg-sky-50 px-3.5 py-2.5 text-xs font-semibold text-sky-900 transition-colors hover:bg-sky-100"
+            >
+              <Download className="h-4 w-4" />
+              <span>تحميل أوفلاين (HTML شامل)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePrintPdf}
+              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+            >
+              <Printer className="h-4 w-4" />
+              <span>طباعة / تصدير الكتيّب PDF</span>
+            </button>
+          </div>
         </div>
+
+        {downloadNotice && (
+          <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-medium text-emerald-900">
+            {downloadNotice}
+          </div>
+        )}
 
         {/* Unit Filter + View Tabs */}
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
@@ -158,7 +252,7 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
                 key={t.id}
                 type="button"
                 onClick={() => setActiveTab(t.id)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                   activeTab === t.id
                     ? 'bg-amber-600 text-white'
                     : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
@@ -187,18 +281,9 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
         </div>
       </section>
 
-      {/* Print-only Cover Header */}
-      <div className="hidden print-only mb-6 border-b-2 border-slate-800 pb-4 text-center">
-        <h1 className="font-display text-2xl font-bold">
-          الملزمة الشاملة – كتاب الجغرافيا للصف التاسع الأساسي (الجمهورية اليمنية – طبعة 2026)
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          المرجع الرسمي: جغرافية الجمهورية اليمنية والوطن العربي (طبعة 1444هـ / 2023م)
-        </p>
-      </div>
-
-      {/* TAB 1: FULL LESSON-BY-LESSON SUMMARY */}
-      {activeTab === 'summary' && (
+      <div className="no-print space-y-6">
+        {/* TAB 1: FULL LESSON-BY-LESSON SUMMARY */}
+        {activeTab === 'summary' && (
         <div className="space-y-8">
           {filteredUnits.map((unit) => (
             <section
@@ -365,94 +450,160 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
       {/* TAB 3: COMPARATIVE TABLES & CLASSIFICATIONS */}
       {activeTab === 'tables' && (
         <div className="space-y-8">
-          {/* High-Focus Ministerial Comparative Tables */}
+          {/* Interactive Side-by-Side Entity Comparator */}
+          <SideBySideComparator onGoToLesson={onGoToLesson} onGoToAtlas={onGoToAtlas} />
+
+          {/* High-Focus Standalone Ministerial Comparative Tables */}
           <div className="space-y-4">
             <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="font-display text-base font-extrabold text-slate-900">
-                    جداول المقارنات والربط بالمحافظات والدول ({filteredMinisterialTables.length} جدولاً)
+                    جداول المقارنات المستقلة والربط بالمحافظات والدول ({filteredMinisterialTables.length} جدولاً)
                   </h2>
                   <p className="mt-1 text-xs text-slate-700">
-                    كل معلم، جبل، وادٍ، ميناء، محمية، معدن، نهر وبحيرة مربوط 1-إلى-1 بمحافظته أو دولته لمنع الخلط الامتحاني.
+                    كل مجال مستقل بذاته (المعادن، المصانع، المطارات، النفط والغاز، السدود، الجزر، البن، المحميات، المعالم، الكثافة السكانية) ومربوط بمحافظته أو دولته لمنع الخلط الامتحاني.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveTab('disambiguation')}
-                  className="no-print inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                  className="no-print inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800"
                 >
                   <ArrowLeftRight className="h-3.5 w-3.5" />
                   <span>تدريب التخيير بين المتشابهات</span>
                 </button>
               </div>
+
+              {/* Standalone Category Filter Buttons */}
+              <div className="no-print flex flex-wrap gap-1.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setTableCategory('all')}
+                  className={`min-h-[36px] whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold tabular-nums transition-colors ${
+                    tableCategory === 'all'
+                      ? 'border-amber-600 bg-amber-600 text-white'
+                      : 'border-amber-200 bg-white text-slate-700 hover:bg-amber-100/70'
+                  }`}
+                >
+                  الكل ({tableCategoryCounts.all})
+                </button>
+                {COMPARISON_CATEGORIES.map((cat) => {
+                  const active = tableCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setTableCategory(cat.id)}
+                      className={`min-h-[36px] whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold tabular-nums transition-colors ${
+                        active
+                          ? 'border-amber-600 bg-amber-600 text-white'
+                          : 'border-amber-200 bg-white text-slate-700 hover:bg-amber-100/70'
+                      }`}
+                    >
+                      {cat.label} ({tableCategoryCounts[cat.id]})
+                    </button>
+                  );
+                })}
+              </div>
+
               <div className="no-print relative">
                 <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   type="search"
                   value={tableSearch}
                   onChange={(e) => setTableSearch(e.target.value)}
-                  placeholder="ابحث في الجداول باسم المعلم أو المحافظة أو الدولة (مثال: عدن، شهارة، حضرموت، الغدير، تدمر، الفوسفات)..."
+                  placeholder="ابحث في الجداول باسم المعدن أو المصنع أو المطار أو حقل النفط أو المحافظة (مثال: صافر، باجل، الريان، الملح، الغدير)..."
                   className="w-full rounded-lg border border-amber-200 bg-white py-2 pl-3 pr-9 text-xs text-slate-800 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none"
                 />
               </div>
             </div>
 
-            {filteredMinisterialTables.map((ct) => {
-              const unit = getUnitById(ct.unitId);
-              return (
-                <section
-                  key={ct.id}
-                  className="print-break-inside-avoid overflow-hidden rounded-xl border border-amber-200 bg-white"
+            {filteredMinisterialTables.length === 0 ? (
+              <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-xs text-slate-600">
+                <p>لا توجد جداول مطابقة للتصفية الحالية.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTableCategory('all');
+                    setTableSearch('');
+                    setUnitFilter('all');
+                  }}
+                  className="mt-3 inline-flex items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 font-semibold text-slate-800 hover:bg-slate-100"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-100 bg-amber-50/50 px-5 py-3">
-                    <div>
-                      <h3 className="font-display text-sm font-bold text-slate-900">{ct.title}</h3>
-                      <p className="text-xs text-slate-600">
-                        {unit ? `الوحدة ${unit.unitNumber}: ${unit.title}` : ''} ·{' '}
-                        <span className="font-mono">{ct.pageRef}</span> · مواضع الوزاري:{' '}
-                        <strong className="font-mono text-amber-800">{ct.ministerialSlots}</strong>
-                      </p>
+                  إعادة تعيين التصفية
+                </button>
+              </div>
+            ) : (
+              filteredMinisterialTables.map((ct) => {
+                const unit = getUnitById(ct.unitId);
+                return (
+                  <section
+                    key={ct.id}
+                    className="print-break-inside-avoid overflow-hidden rounded-xl border border-amber-200 bg-white"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-100 bg-amber-50/50 px-5 py-3">
+                      <div>
+                        <h3 className="font-display text-sm font-bold text-slate-900">{ct.title}</h3>
+                        <p className="text-xs text-slate-600">
+                          {unit ? `الوحدة ${unit.unitNumber}: ${unit.title}` : ''} ·{' '}
+                          <span className="font-mono">{ct.pageRef}</span> · مواضع الوزاري:{' '}
+                          <strong className="font-mono text-amber-800">{ct.ministerialSlots}</strong>
+                        </p>
+                      </div>
+                      <div className="no-print flex flex-wrap items-center gap-3">
+                        {ct.atlasLocationId && (
+                          <button
+                            type="button"
+                            onClick={() => onGoToAtlas(ct.atlasLocationId!)}
+                            className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium text-emerald-700 hover:underline"
+                          >
+                            <MapPin className="h-3.5 w-3.5" />
+                            <span>عرض في الأطلس</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => onGoToLesson(ct.unitId, ct.lessonId)}
+                          className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium text-sky-700 hover:underline"
+                        >
+                          <BookOpen className="h-3.5 w-3.5" />
+                          <span>فتح الدرس</span>
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => onGoToLesson(ct.unitId, ct.lessonId)}
-                      className="no-print text-xs font-medium text-sky-700 hover:underline"
-                    >
-                      فتح الدرس
-                    </button>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-right text-sm">
-                      <thead className="bg-slate-50/70 text-xs text-slate-600">
-                        <tr>
-                          {ct.headers.map((h, i) => (
-                            <th key={i} className="border-b border-slate-200 px-4 py-2.5 font-semibold">
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {ct.rows.map((row, rIdx) => (
-                          <tr key={rIdx}>
-                            {row.map((cell, cIdx) => (
-                              <td key={cIdx} className="px-4 py-2.5 text-slate-800">
-                                {cell}
-                              </td>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-right text-sm">
+                        <thead className="bg-slate-50/70 text-xs text-slate-600">
+                          <tr>
+                            {ct.headers.map((h, i) => (
+                              <th key={i} className="border-b border-slate-200 px-4 py-2.5 font-semibold">
+                                {h}
+                              </th>
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="border-t border-slate-100 bg-slate-50/60 px-5 py-2.5 text-xs text-slate-700">
-                    <strong className="text-slate-900">مفتاح التركيز الوزاري: </strong>
-                    {ct.focusTip}
-                  </div>
-                </section>
-              );
-            })}
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {ct.rows.map((row, rIdx) => (
+                            <tr key={rIdx}>
+                              {row.map((cell, cIdx) => (
+                                <td key={cIdx} className="px-4 py-2.5 text-slate-800">
+                                  {cell}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="border-t border-slate-100 bg-slate-50/60 px-5 py-2.5 text-xs text-slate-700">
+                      <strong className="text-slate-900">مفتاح التركيز الوزاري: </strong>
+                      {ct.focusTip}
+                    </div>
+                  </section>
+                );
+              })
+            )}
           </div>
 
           {/* All Official Textbook Tables by Lesson */}
@@ -700,6 +851,98 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
           </div>
         </section>
       )}
+      </div>
+
+      {/* PRINTABLE / OFFLINE BOOKLET PREVIEW & A4 PRINT HOST */}
+      <div className={activeTab === 'booklet' ? 'space-y-5' : 'print-booklet-only'}>
+        {activeTab === 'booklet' && (
+          <section className="no-print space-y-4 rounded-xl border border-sky-200 bg-sky-50/70 p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="font-display flex items-center gap-2 text-base font-extrabold text-slate-900">
+                  <FileText className="h-4 w-4 text-sky-700" />
+                  <span>مُجهّز كتيّب الملزمة للطباعة الورقية والتحميل بدون إنترنت</span>
+                </h2>
+                <p className="mt-1 text-xs text-slate-700">
+                  اختر نطاق الملزمة ثم اضغط «طباعة / تصدير الكتيّب PDF» للحفظ على ورق A4، أو «تحميل أوفلاين (HTML شامل)» لإرسال الملف وفتحه على أي جهاز بدون إنترنت.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownloadOfflineHtml}
+                  className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-100"
+                >
+                  <Download className="h-3.5 w-3.5 text-sky-700" />
+                  <span>تحميل ملف أوفلاين (.HTML)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePrintPdf}
+                  className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  <span>طباعة / حفظ PDF (A4)</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {(
+                [
+                  { id: 'full', label: 'الملزمة الشاملة الكاملة (الوحدات 1–4)' },
+                  { id: 'unit-1', label: 'الوحدة 1: البيئة الطبيعية لليمن' },
+                  { id: 'unit-2', label: 'الوحدة 2: السكان والاقتصاد في اليمن' },
+                  { id: 'unit-3', label: 'الوحدة 3: البيئة الطبيعية للوطن العربي' },
+                  { id: 'unit-4', label: 'الوحدة 4: السكان والاقتصاد في الوطن العربي' },
+                  { id: 'maps-tables', label: 'كتيّب الخرائط والجداول المستقلة فقط' }
+                ] as { id: BookletScope; label: string }[]
+              ).map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setBookletScope(opt.id)}
+                  className={`min-h-[36px] whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    bookletScope === opt.id
+                      ? 'border-sky-600 bg-sky-600 text-white'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-6 border-t border-sky-200/70 pt-3 text-xs text-slate-800">
+              <label className="inline-flex cursor-pointer items-center gap-2 font-medium">
+                <input
+                  type="checkbox"
+                  checked={includeBlankMaps}
+                  onChange={(e) => setIncludeBlankMaps(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-sky-600"
+                />
+                <span>تضمين نسخ الخرائط الصماء للتدريب الورقي بالقلم ومفاتيحها</span>
+              </label>
+              <label className="inline-flex cursor-pointer items-center gap-2 font-medium">
+                <input
+                  type="checkbox"
+                  checked={includeQuizKey}
+                  onChange={(e) => setIncludeQuizKey(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-sky-600"
+                />
+                <span>تضمين الأسئلة الوزارية الختامية وملحق الإجابات</span>
+              </label>
+            </div>
+          </section>
+        )}
+
+        <PrintableStudyBooklet
+          scope={bookletScope}
+          includeBlankMaps={includeBlankMaps}
+          includeQuizKey={includeQuizKey}
+          containerRef={bookletRef}
+        />
+      </div>
     </main>
   );
 };
