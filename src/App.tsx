@@ -93,13 +93,23 @@ export default function App() {
   const [mapLabScope, setMapLabScope] = useState<AtlasScope | undefined>(undefined);
   const [bookletScope, setBookletScope] = useState<BookletScope>('full');
   const [ownerAnalyticsOpen, setOwnerAnalyticsOpen] = useState<boolean>(false);
+  const longPressTimerRef = React.useRef<number | null>(null);
+  const tapStreakRef = React.useRef<{ count: number; lastAt: number }>({ count: 0, lastAt: 0 });
+  const pendingOwnerOpenRef = React.useRef<boolean>(false);
 
   const telemetry = useBookletTelemetry(bookletScope, true);
 
   React.useEffect(() => {
     if (!telemetry.isAdmin) {
       setOwnerAnalyticsOpen(false);
+      if (telemetry.authReady && telemetry.user) {
+        pendingOwnerOpenRef.current = false;
+      }
       return;
+    }
+    if (pendingOwnerOpenRef.current) {
+      pendingOwnerOpenRef.current = false;
+      setOwnerAnalyticsOpen(true);
     }
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'm') {
@@ -109,21 +119,89 @@ export default function App() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [telemetry.isAdmin]);
+  }, [telemetry.isAdmin, telemetry.authReady, telemetry.user]);
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const portalParam = params.get('portal') as PortalId | null;
-    const validPortals: PortalId[] = ['home', 'units', 'atlas', 'map-lab', 'study-guide', 'training', 'audit'];
-    if (portalParam && validPortals.includes(portalParam)) {
+    const panelParam = params.get('panel');
+    const hashValue = window.location.hash;
+    const validPublicPortals: PortalId[] = ['home', 'units', 'atlas', 'map-lab', 'study-guide', 'training'];
+    let shouldCleanUrl = false;
+    if (portalParam && validPublicPortals.includes(portalParam)) {
       setPortal(portalParam);
+      shouldCleanUrl = true;
+    }
+    if (panelParam === 'owner' || hashValue === '#owner-stats') {
+      pendingOwnerOpenRef.current = true;
+      shouldCleanUrl = true;
+    }
+    if (shouldCleanUrl) {
       window.history.replaceState({}, '', window.location.pathname);
     }
     // Run once on initial boot when launched via App Drawer shortcut
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const activePortal = progress.lastLocation.portal;
+  const openOwnerPanelIfAuthorized = () => {
+    if (telemetry.isAdmin) {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate(25);
+        } catch {
+          // Ignore unsupported vibrate
+        }
+      }
+      setOwnerAnalyticsOpen(true);
+    }
+  };
+
+  const handleStatsPointerDown = () => {
+    if (!telemetry.isAdmin) return;
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+    }
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressTimerRef.current = null;
+      openOwnerPanelIfAuthorized();
+    }, 650);
+  };
+
+  const clearStatsLongPress = () => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleStatsMultiTap = () => {
+    const now = Date.now();
+    const prev = tapStreakRef.current;
+    const nextCount = now - prev.lastAt <= 1800 ? prev.count + 1 : 1;
+    tapStreakRef.current = { count: nextCount, lastAt: now };
+
+    if (nextCount >= 5) {
+      tapStreakRef.current = { count: 0, lastAt: 0 };
+      if (telemetry.isAdmin) {
+        openOwnerPanelIfAuthorized();
+      } else if (!telemetry.user && !telemetry.authBusy) {
+        pendingOwnerOpenRef.current = true;
+        void telemetry.handleSignIn();
+      }
+    }
+  };
+
+  const activePortal: PortalId =
+    progress.lastLocation.portal === 'audit' && !telemetry.isAdmin
+      ? 'home'
+      : progress.lastLocation.portal;
+
+  React.useEffect(() => {
+    if (telemetry.authReady && !telemetry.isAdmin && progress.lastLocation.portal === 'audit') {
+      setPortal('home');
+    }
+  }, [telemetry.authReady, telemetry.isAdmin, progress.lastLocation.portal, setPortal]);
+
   const activeUnit = getUnitById(progress.lastLocation.unitId);
   const activeLesson = getLessonById(progress.lastLocation.lessonId);
 
@@ -157,6 +235,10 @@ export default function App() {
   };
 
   const handleSelectPortal = (portal: PortalId) => {
+    if (portal === 'audit' && !telemetry.isAdmin) {
+      setPortal('home');
+      return;
+    }
     if (portal === 'training') {
       setTrainingFilter({});
     }
@@ -291,7 +373,7 @@ export default function App() {
             />
           )}
 
-          {activePortal === 'audit' && (
+          {activePortal === 'audit' && telemetry.isAdmin && (
             <AuditReportView
               onBackHome={() => handleSelectPortal('home')}
               onGoToLesson={openLesson}
@@ -334,13 +416,6 @@ export default function App() {
             </button>
             <button
               type="button"
-              onClick={() => handleSelectPortal('audit')}
-              className="font-medium text-slate-700 hover:text-sky-700 hover:underline"
-            >
-              تقرير التدقيق والمطابقة
-            </button>
-            <button
-              type="button"
               onClick={() => handleSelectPortal('study-guide')}
               className="font-medium text-slate-700 hover:text-sky-700 hover:underline"
             >
@@ -352,7 +427,14 @@ export default function App() {
         {/* Public Aggregate Users & Active Count Bar at the Very Bottom of the App */}
         <div className="border-t border-slate-100 bg-slate-50/80">
           <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-xs sm:px-6">
-            <div className="flex flex-wrap items-center gap-5">
+            <div
+              onPointerDown={handleStatsPointerDown}
+              onPointerUp={clearStatsLongPress}
+              onPointerCancel={clearStatsLongPress}
+              onPointerLeave={clearStatsLongPress}
+              onClick={handleStatsMultiTap}
+              className="flex select-none flex-wrap items-center gap-5"
+            >
               <div className="inline-flex items-center gap-1.5 text-slate-700">
                 <Users className="h-3.5 w-3.5 text-sky-700" />
                 <span>عدد المستخدمين:</span>
@@ -361,10 +443,7 @@ export default function App() {
                 </strong>
               </div>
 
-              <div
-                onDoubleClick={telemetry.isAdmin ? () => setOwnerAnalyticsOpen(true) : undefined}
-                className="inline-flex items-center gap-1.5 text-slate-700"
-              >
+              <div className="inline-flex items-center gap-1.5 text-slate-700">
                 <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
                 <span>النشطون الآن:</span>
                 <strong className="font-mono tabular-nums text-emerald-800">
@@ -382,16 +461,16 @@ export default function App() {
                       type="button"
                       onClick={() => setOwnerAnalyticsOpen(true)}
                       aria-label="عرض تفاصيل المستخدمين"
-                      className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-100"
+                      className="inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-slate-200 bg-white p-1.5 text-slate-700 hover:bg-slate-100 active:bg-slate-200"
                     >
-                      <BarChart3 className="h-3.5 w-3.5" />
+                      <BarChart3 className="h-4 w-4" />
                     </button>
                   )}
                   <button
                     type="button"
                     disabled={telemetry.authBusy}
                     onClick={() => void telemetry.handleSignOut()}
-                    className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
+                    className="inline-flex min-h-[34px] items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
                   >
                     <LogOut className="h-3 w-3" />
                     <span>خروج</span>
@@ -402,7 +481,7 @@ export default function App() {
                   type="button"
                   disabled={telemetry.authBusy}
                   onClick={() => void telemetry.handleSignIn()}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-sky-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-sky-800 hover:bg-sky-50"
+                  className="inline-flex min-h-[34px] items-center gap-1.5 rounded-md border border-sky-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-sky-800 hover:bg-sky-50"
                 >
                   <LogIn className="h-3 w-3" />
                   <span>{telemetry.authBusy ? 'جارٍ الاتصال...' : 'تسجيل الدخول للمزامنة'}</span>
@@ -420,7 +499,6 @@ export default function App() {
         onSelectSearchHit={handleSearchHit}
         onSelectBookmark={handleSelectBookmark}
         onRemoveBookmark={(bm) => toggleBookmark(bm)}
-        onOpenAudit={() => handleSelectPortal('audit')}
         onResetProgress={resetProgress}
       />
 
@@ -434,6 +512,10 @@ export default function App() {
           activeList={telemetry.adminPresenceList}
           userProfiles={telemetry.adminUserProfiles}
           downloadLogs={telemetry.adminDownloadLogs}
+          onOpenAuditReport={() => {
+            setOwnerAnalyticsOpen(false);
+            handleSelectPortal('audit');
+          }}
           onClose={() => setOwnerAnalyticsOpen(false)}
         />
       )}

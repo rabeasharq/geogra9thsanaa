@@ -16,7 +16,6 @@ import {
   CheckSquare,
   ArrowLeft,
   Bookmark,
-  ShieldCheck,
   Search,
   PenTool,
   Phone
@@ -199,15 +198,15 @@ export const HomePortal: React.FC<HomePortalProps> = ({
           </button>
         </div>
         <div>
-          <div className="text-xs text-slate-500">المرجعية والتدقيق</div>
+          <div className="text-xs text-slate-500">نطاق الكتاب الرسمي</div>
           <div className="mt-1 font-mono text-2xl font-bold tabular-nums text-slate-900">112 صفحة</div>
           <button
             type="button"
-            onClick={() => onNavigatePortal('audit')}
+            onClick={() => onNavigatePortal('study-guide')}
             className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:underline"
           >
-            <ShieldCheck className="h-3.5 w-3.5" />
-            <span>تقرير التدقيق والمطابقة</span>
+            <FileText className="h-3.5 w-3.5" />
+            <span>الملزمة الشاملة والملخصات</span>
           </button>
         </div>
       </section>

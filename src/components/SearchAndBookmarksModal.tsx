@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { searchBookContent, SearchHit } from '../data/bookIndex';
 import { BookmarkItem } from '../types/textbook';
-import { Search, X, Bookmark, Trash2, BookOpen, Compass, CheckSquare, ShieldCheck } from 'lucide-react';
+import { Search, X, Bookmark, Trash2, BookOpen, Compass, CheckSquare } from 'lucide-react';
 
 interface SearchAndBookmarksModalProps {
   open: boolean;
@@ -10,7 +10,6 @@ interface SearchAndBookmarksModalProps {
   onSelectSearchHit: (hit: SearchHit) => void;
   onSelectBookmark: (item: BookmarkItem) => void;
   onRemoveBookmark: (item: BookmarkItem) => void;
-  onOpenAudit: () => void;
   onResetProgress: () => void;
 }
 
@@ -21,7 +20,6 @@ export const SearchAndBookmarksModal: React.FC<SearchAndBookmarksModalProps> = (
   onSelectSearchHit,
   onSelectBookmark,
   onRemoveBookmark,
-  onOpenAudit,
   onResetProgress
 }) => {
   const [query, setQuery] = useState('');
@@ -199,19 +197,7 @@ export const SearchAndBookmarksModal: React.FC<SearchAndBookmarksModalProps> = (
         </div>
 
         {/* Footer utilities */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-3 text-xs">
-          <button
-            type="button"
-            onClick={() => {
-              onOpenAudit();
-              onClose();
-            }}
-            className="inline-flex items-center gap-1.5 font-medium text-emerald-700 hover:underline"
-          >
-            <ShieldCheck className="h-4 w-4" />
-            <span>فتح تقرير التدقيق والمطابقة</span>
-          </button>
-
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-5 py-3 text-xs">
           <button
             type="button"
             onClick={onResetProgress}
