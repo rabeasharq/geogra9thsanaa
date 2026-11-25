@@ -18,11 +18,13 @@ import {
   db,
   formatFirebaseAuthError,
   handleFirestoreError,
+  isFirestoreUnavailableError,
   onAuthStateChanged,
   OperationType,
   resolveRedirectSignIn,
   signInWithGoogleAccount,
   signOutAccount,
+  syncFirestoreNetworkState,
   User
 } from '../firebase';
 import { BookletScope } from '../components/PrintableStudyBooklet';
@@ -158,10 +160,32 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
   const [authBusy, setAuthBusy] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator === 'undefined' ? true : navigator.onLine
+  );
 
   const sessionIdRef = useRef<string>(createFreshSessionId());
   const presenceCreatedRef = useRef(false);
   const countedInGlobalActiveRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleOnline = () => {
+      setIsOnline(true);
+      void syncFirestoreNetworkState(true);
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      void syncFirestoreNetworkState(false);
+    };
+    void syncFirestoreNetworkState(navigator.onLine);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // 1. Track Firebase Auth state & resolve standalone redirect logins
   useEffect(() => {
@@ -264,7 +288,7 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
         }
       },
       (err) => {
-        if (err.message.includes('offline')) return;
+        if (isFirestoreUnavailableError(err)) return;
         try {
           handleFirestoreError(err, OperationType.GET, 'booklet_stats/global');
         } catch (wrapped) {
@@ -273,7 +297,7 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
       }
     );
     return () => unsub();
-  }, []);
+  }, [isOnline]);
 
   // 3. Maintain private session heartbeat + user profile + global activeReaders delta
   useEffect(() => {
@@ -409,7 +433,7 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
           });
         }
       } catch (err) {
-        if (err instanceof Error && err.message.includes('offline')) return;
+        if (isFirestoreUnavailableError(err)) return;
         try {
           handleFirestoreError(err, OperationType.WRITE, `booklet_presence/${sessionId}`);
         } catch {
@@ -472,6 +496,7 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
         setAdminPresenceList(active);
       },
       (err) => {
+        if (isFirestoreUnavailableError(err)) return;
         try {
           handleFirestoreError(err, OperationType.LIST, 'booklet_presence');
         } catch {
@@ -503,6 +528,7 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
         setAdminUserProfiles(users);
       },
       (err) => {
+        if (isFirestoreUnavailableError(err)) return;
         try {
           handleFirestoreError(err, OperationType.LIST, 'booklet_user_profiles');
         } catch {
@@ -532,6 +558,7 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
         setAdminDownloadLogs(logs);
       },
       (err) => {
+        if (isFirestoreUnavailableError(err)) return;
         try {
           handleFirestoreError(err, OperationType.LIST, 'booklet_download_logs');
         } catch {
@@ -589,7 +616,10 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
           }
         });
       } catch (err) {
-        handleFirestoreError(err, OperationType.WRITE, 'booklet_stats/global');
+        if (!isFirestoreUnavailableError(err)) {
+          handleFirestoreError(err, OperationType.WRITE, 'booklet_stats/global');
+        }
+        return;
       }
 
       const profileRef = doc(db, 'booklet_user_profiles', user.uid);
@@ -629,7 +659,10 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
           }
         });
       } catch (err) {
-        handleFirestoreError(err, OperationType.WRITE, `booklet_user_profiles/${user.uid}`);
+        if (!isFirestoreUnavailableError(err)) {
+          handleFirestoreError(err, OperationType.WRITE, `booklet_user_profiles/${user.uid}`);
+        }
+        return;
       }
 
       const logId = `log_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -646,7 +679,9 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
           createdAt: serverTimestamp()
         });
       } catch (err) {
-        handleFirestoreError(err, OperationType.CREATE, `booklet_download_logs/${logId}`);
+        if (!isFirestoreUnavailableError(err)) {
+          handleFirestoreError(err, OperationType.CREATE, `booklet_download_logs/${logId}`);
+        }
       }
     },
     [user, isReadingBooklet]

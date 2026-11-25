@@ -11,11 +11,43 @@ import {
   signOut,
   User
 } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import {
+  disableNetwork,
+  doc,
+  enableNetwork,
+  Firestore,
+  getDocFromServer,
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  setLogLevel
+} from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Suppress internal SDK offline/transport retry console.error spam in offline-capable PWA environments;
+// actionable permission/schema errors are still surfaced explicitly via handleFirestoreError.
+setLogLevel('silent');
+
+let firestoreInstance: Firestore;
+try {
+  firestoreInstance = initializeFirestore(
+    app,
+    {
+      experimentalForceLongPolling: true,
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+      })
+    },
+    firebaseConfig.firestoreDatabaseId
+  );
+} catch {
+  firestoreInstance = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+}
+
+export const db = firestoreInstance;
 export const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
@@ -113,15 +145,50 @@ export function handleFirestoreError(
   throw new Error(JSON.stringify(errInfo));
 }
 
-export async function testConnection(): Promise<boolean> {
+export function isFirestoreUnavailableError(error: unknown): boolean {
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error
+      ? String((error as { code?: unknown }).code || '').toLowerCase()
+      : '';
+  const msg = (error instanceof Error ? error.message : String(error || '')).toLowerCase();
+  return (
+    code === 'unavailable' ||
+    code === 'deadline-exceeded' ||
+    code.endsWith('/unavailable') ||
+    msg.includes('offline') ||
+    msg.includes('unavailable') ||
+    msg.includes('could not reach') ||
+    msg.includes('the operation could not be completed') ||
+    msg.includes('network')
+  );
+}
+
+export async function syncFirestoreNetworkState(online: boolean): Promise<void> {
   try {
+    if (online) {
+      await enableNetwork(db);
+    } else {
+      await disableNetwork(db);
+    }
+  } catch {
+    // Ignore network toggle errors during transitions or teardown
+  }
+}
+
+export async function testConnection(): Promise<boolean> {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    await syncFirestoreNetworkState(false);
+    return false;
+  }
+  try {
+    await enableNetwork(db).catch(() => undefined);
     await getDocFromServer(doc(db, 'test', 'connection'));
     return true;
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn('Firestore client is currently offline — using encrypted local vault.');
+    if (isFirestoreUnavailableError(error)) {
       return false;
     }
+    console.error('Please check your Firebase configuration.', error);
     return false;
   }
 }
