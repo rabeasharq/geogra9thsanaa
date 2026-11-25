@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useId, useMemo } from 'react';
 import {
   BOOK_FRONT_MATTER,
   CORE_TEXTBOOK_QUESTIONS,
@@ -132,8 +132,100 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
     return found ? `ملزمة الوحدة ${found.unitNumber}: ${found.title} (ص ${found.pageRange})` : 'الملزمة الشاملة';
   }, [scope]);
 
+  const rawWatermarkId = useId().replace(/:/g, '_');
+  const screenPatternId = `booklet_wm_screen_${rawWatermarkId}`;
+  const printPatternId = `booklet_wm_print_${rawWatermarkId}`;
+
   return (
-    <div ref={containerRef} id="printable-study-booklet" className="space-y-6 text-slate-900">
+    <div
+      ref={containerRef}
+      id="printable-study-booklet"
+      className="relative space-y-6 overflow-hidden text-slate-900"
+    >
+      {/* Screen Watermark Layer (confined to booklet sheets, unobtrusive) */}
+      <div
+        aria-hidden="true"
+        className="no-print pointer-events-none absolute inset-0 z-10 overflow-hidden"
+      >
+        <svg className="h-full w-full text-slate-900 opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern
+              id={screenPatternId}
+              width="360"
+              height="220"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(-26)"
+            >
+              <text
+                x="180"
+                y="96"
+                textAnchor="middle"
+                fill="currentColor"
+                fontFamily="'Cairo', 'IBM Plex Sans Arabic', sans-serif"
+                fontSize="14"
+                fontWeight="700"
+              >
+                إعداد: أ. إبراهيم أحمد متاش
+              </text>
+              <text
+                x="180"
+                y="120"
+                textAnchor="middle"
+                fill="currentColor"
+                fontFamily="'Cairo', 'IBM Plex Sans Arabic', sans-serif"
+                fontSize="13.5"
+                fontWeight="700"
+              >
+                مراجعة: أ. مجدي محمد النوفاني
+              </text>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill={`url(#${screenPatternId})`} />
+        </svg>
+      </div>
+
+      {/* Print / PDF A4 Fixed Watermark Layer (repeats on every printed page) */}
+      <div
+        aria-hidden="true"
+        className="print-only pointer-events-none fixed inset-0 z-50 overflow-hidden"
+      >
+        <svg className="h-full w-full text-slate-900 opacity-[0.075]" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern
+              id={printPatternId}
+              width="360"
+              height="220"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(-26)"
+            >
+              <text
+                x="180"
+                y="96"
+                textAnchor="middle"
+                fill="currentColor"
+                fontFamily="'Cairo', 'IBM Plex Sans Arabic', sans-serif"
+                fontSize="14"
+                fontWeight="700"
+              >
+                إعداد: أ. إبراهيم أحمد متاش
+              </text>
+              <text
+                x="180"
+                y="120"
+                textAnchor="middle"
+                fill="currentColor"
+                fontFamily="'Cairo', 'IBM Plex Sans Arabic', sans-serif"
+                fontSize="13.5"
+                fontWeight="700"
+              >
+                مراجعة: أ. مجدي محمد النوفاني
+              </text>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill={`url(#${printPatternId})`} />
+        </svg>
+      </div>
+
       {/* ==================== PAGE 1: OFFICIAL COVER & TABLE OF CONTENTS ==================== */}
       <section className="print-break-after rounded-xl border-2 border-slate-300 bg-white p-6">
         <div className="border-b border-slate-200 pb-4 text-center">

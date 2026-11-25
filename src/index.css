@@ -261,6 +261,7 @@ html[data-theme="night"] ::-webkit-scrollbar-thumb {
   background: #94a3b8;
 }
 
+.print-only,
 .print-booklet-only {
   display: none;
 }
