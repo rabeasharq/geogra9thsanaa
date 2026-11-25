@@ -309,9 +309,6 @@ export default function App() {
         activePortal={activePortal}
         onSelectPortal={handleSelectPortal}
         onOpenSearch={() => setSearchOpen(true)}
-        studyFocus={studyFocus}
-        onChangeStudyFocus={setStudyFocus}
-        activeUnitNumber={activeUnit?.unitNumber ?? 1}
         themeMode={themeMode}
         fontScale={fontScale}
         onChangeThemeMode={setThemeMode}
