@@ -293,9 +293,9 @@ service cloud.firestore {
     }
 
     match /admins/{userId} {
-      allow get: if isAdmin() && isValidId(userId);
+      allow get: if isAdmin() && isValidId(userId) && request.auth.uid == userId;
       allow list: if false;
-      allow create: if isAdmin() && isValidId(userId) && isValidAdminDoc(incoming(), userId);
+      allow create: if isAdmin() && isValidId(userId) && request.auth.uid == userId && isValidAdminDoc(incoming(), userId);
       allow update, delete: if false;
     }
   }

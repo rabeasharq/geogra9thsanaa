@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocFromServer,
   limit,
   onSnapshot,
   orderBy,
@@ -13,7 +14,6 @@ import {
   updateDoc
 } from 'firebase/firestore';
 import {
-  ADMIN_EMAIL,
   auth,
   db,
   handleFirestoreError,
@@ -155,21 +155,64 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
 
   const [authBusy, setAuthBusy] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const sessionIdRef = useRef<string>(createFreshSessionId());
   const presenceCreatedRef = useRef(false);
   const countedInGlobalActiveRef = useRef(false);
 
-  const isAdmin = Boolean(user?.email === ADMIN_EMAIL && user?.emailVerified);
-
   // 1. Track Firebase Auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
+      if (!nextUser || !nextUser.emailVerified) {
+        setIsAdmin(false);
+      }
       setAuthReady(true);
     });
     return () => unsub();
   }, []);
+
+  // 1b. Server-side admin role verification via Firestore rules (zero owner email in client bundle)
+  useEffect(() => {
+    if (!authReady || !user || !user.emailVerified) {
+      setIsAdmin(false);
+      return;
+    }
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return;
+    }
+
+    let cancelled = false;
+    setIsAdmin(false);
+    const adminRef = doc(db, 'admins', user.uid);
+
+    void getDocFromServer(adminRef)
+      .then(async (snap) => {
+        if (cancelled) return;
+        setIsAdmin(true);
+        if (!snap.exists()) {
+          try {
+            await setDoc(adminRef, {
+              uid: user.uid,
+              role: 'admin',
+              createdAt: serverTimestamp()
+            });
+          } catch {
+            // Non-blocking registration
+          }
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIsAdmin(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authReady, user]);
 
   // 2. Listen to public aggregate non-PII counter doc (`booklet_stats/global`)
   useEffect(() => {
