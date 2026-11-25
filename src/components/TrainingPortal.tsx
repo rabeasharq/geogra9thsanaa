@@ -32,8 +32,12 @@ import {
   Sparkles,
   FileCheck2,
   Shuffle,
-  MapPin
+  MapPin,
+  Target,
+  AlertTriangle
 } from 'lucide-react';
+import { StudentDiagnosisPanel } from './StudentDiagnosisPanel';
+import { diagnoseAnswers, diagnoseStudentProgress } from '../utils/studentDiagnosis';
 
 interface TrainingPortalProps {
   initialUnitId?: string;
@@ -125,13 +129,14 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
   onGoToAtlas,
   onGoToComparisons
 }) => {
-  const [activeTab, setActiveTab] = useState<'practice' | 'simulator' | 'patterns'>('practice');
+  const [activeTab, setActiveTab] = useState<'practice' | 'diagnosis' | 'simulator' | 'patterns'>('practice');
   const [sourceFilter, setSourceFilter] = useState<QuestionSourceCategory | 'all'>('all');
   const [modelFilter, setModelFilter] = useState<string>('all');
   const [unitFilter, setUnitFilter] = useState<string>(initialUnitId || 'all');
   const [lessonFilter, setLessonFilter] = useState<string>(initialLessonId || 'all');
   const [typeFilter, setTypeFilter] = useState<QuestionType | 'all'>('all');
   const [levelFilter, setLevelFilter] = useState<CognitiveLevel | 'all'>('all');
+  const [onlyWrongFilter, setOnlyWrongFilter] = useState<boolean>(false);
 
   // Simulator state (19 Geography items matching Ministerial structure: 8 T/F + 9 MCQ + 2 Map)
   const [simSource, setSimSource] = useState<'mixed' | 'ministerial-only'>('mixed');
@@ -146,6 +151,13 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
     if (initialLessonId) setLessonFilter(initialLessonId);
     else if (initialUnitId) setLessonFilter('all');
   }, [initialUnitId, initialLessonId]);
+
+  const diagnosis = useMemo(() => diagnoseStudentProgress(progress), [progress]);
+
+  const simDiagnosis = useMemo(() => {
+    if (!simSubmitted) return null;
+    return diagnoseAnswers(simAnswers, simPaper);
+  }, [simSubmitted, simAnswers, simPaper]);
 
   const availableLessons = useMemo(() => {
     if (unitFilter === 'all') return TEXTBOOK_UNITS.flatMap((u) => u.lessons);
@@ -163,9 +175,22 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
       if (lessonFilter !== 'all' && q.lessonId !== lessonFilter) return false;
       if (typeFilter !== 'all' && q.type !== typeFilter) return false;
       if (levelFilter !== 'all' && q.cognitiveLevel !== levelFilter) return false;
+      if (onlyWrongFilter) {
+        const ans = progress.quizAnswers[q.id];
+        if (!ans || ans.isCorrect) return false;
+      }
       return true;
     });
-  }, [sourceFilter, modelFilter, unitFilter, lessonFilter, typeFilter, levelFilter]);
+  }, [
+    sourceFilter,
+    modelFilter,
+    unitFilter,
+    lessonFilter,
+    typeFilter,
+    levelFilter,
+    onlyWrongFilter,
+    progress.quizAnswers
+  ]);
 
   const answeredInFilter = filteredQuestions.filter((q) => progress.quizAnswers[q.id]);
   const correctInFilter = answeredInFilter.filter((q) => progress.quizAnswers[q.id]?.isCorrect);
@@ -187,7 +212,20 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
     unitFilter !== 'all' ||
     lessonFilter !== 'all' ||
     typeFilter !== 'all' ||
-    levelFilter !== 'all';
+    levelFilter !== 'all' ||
+    onlyWrongFilter;
+
+  const handlePracticeLessonMistakes = (targetUnitId: string, targetLessonId: string) => {
+    setSourceFilter('all');
+    setModelFilter('all');
+    setTypeFilter('all');
+    setLevelFilter('all');
+    setUnitFilter(targetUnitId);
+    setLessonFilter(targetLessonId);
+    setOnlyWrongFilter(true);
+    setActiveTab('practice');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <main className="mx-auto max-w-[1400px] space-y-6 px-4 py-6 sm:px-6">
@@ -214,6 +252,25 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
               }`}
             >
               بنك التدريبات ({filteredQuestions.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('diagnosis')}
+              className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                activeTab === 'diagnosis'
+                  ? 'bg-white text-rose-800 shadow-sm'
+                  : diagnosis.totalWrong > 0
+                    ? 'text-rose-700 hover:bg-white/60 hover:text-rose-900'
+                    : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Target className="h-3.5 w-3.5" />
+              <span>
+                خطة المراجعة وأخطائي
+                {diagnosis.lessonsNeedingReview.length > 0
+                  ? ` (${diagnosis.lessonsNeedingReview.length})`
+                  : ''}
+              </span>
             </button>
             <button
               type="button"
@@ -383,9 +440,51 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
 
       {activeTab === 'practice' && (
         <>
+          {/* Quick Diagnostic Callout when student has errors */}
+          {diagnosis.lessonsNeedingReview.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/70 px-5 py-3.5 text-xs">
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                <div className="text-slate-800">
+                  <span className="font-bold text-slate-900">
+                    اقتراح مراجعة سريع ({diagnosis.totalWrong}{' '}
+                    {diagnosis.totalWrong === 1 ? 'خطأ' : 'أخطاء'} في {diagnosis.lessonsNeedingReview.length}{' '}
+                    {diagnosis.lessonsNeedingReview.length === 1 ? 'درس' : 'دروس'}):{' '}
+                  </span>
+                  <span>
+                    أولوية المراجعة الآن لـ «{diagnosis.lessonsNeedingReview[0].lesson.title}» (ص{' '}
+                    {diagnosis.lessonsNeedingReview[0].lesson.pageRange}).
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('diagnosis')}
+                  className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 font-semibold text-amber-950 hover:bg-amber-100"
+                >
+                  عرض خطة المراجعة والاقتراحات
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onGoToLesson(
+                      diagnosis.lessonsNeedingReview[0].unit.id,
+                      diagnosis.lessonsNeedingReview[0].lesson.id
+                    )
+                  }
+                  className="rounded-lg bg-slate-900 px-3 py-1.5 font-semibold text-white hover:bg-slate-800"
+                >
+                  الانتقال للدرس الآن
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Score Strip */}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs">
-            <div className="flex items-center gap-2 text-slate-700">
+            <div className="flex flex-wrap items-center gap-2 text-slate-700">
               <Filter className="h-4 w-4 text-slate-400" />
               <span>
                 الأسئلة المعروضة:{' '}
@@ -402,28 +501,49 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
                 <strong className="font-mono tabular-nums text-emerald-700">{correctInFilter.length}</strong>
               </span>
             </div>
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSourceFilter('all');
-                  setModelFilter('all');
-                  setUnitFilter('all');
-                  setLessonFilter('all');
-                  setTypeFilter('all');
-                  setLevelFilter('all');
-                }}
-                className="inline-flex items-center gap-1 font-medium text-sky-700 hover:underline"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span>إظهار كل الأسئلة</span>
-              </button>
-            )}
+
+            <div className="flex flex-wrap items-center gap-3">
+              {diagnosis.totalWrong > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setOnlyWrongFilter((v) => !v)}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold transition-colors ${
+                    onlyWrongFilter
+                      ? 'border-rose-600 bg-rose-600 text-white'
+                      : 'border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100'
+                  }`}
+                >
+                  <Target className="h-3.5 w-3.5" />
+                  <span>أخطائي فقط ({diagnosis.totalWrong})</span>
+                </button>
+              )}
+
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSourceFilter('all');
+                    setModelFilter('all');
+                    setUnitFilter('all');
+                    setLessonFilter('all');
+                    setTypeFilter('all');
+                    setLevelFilter('all');
+                    setOnlyWrongFilter(false);
+                  }}
+                  className="inline-flex items-center gap-1 font-medium text-sky-700 hover:underline"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  <span>إظهار كل الأسئلة</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {filteredQuestions.length === 0 ? (
             <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-600">
-              لا توجد أسئلة مطابقة للتصفية الحالية. جرّب تغيير المصدر أو نوع السؤال.
+              {onlyWrongFilter
+                ? 'أحسنت! لا توجد أخطاء متبقية ضمن التصفية الحالية.'
+                : 'لا توجد أسئلة مطابقة للتصفية الحالية. جرّب تغيير المصدر أو نوع السؤال.'}
             </div>
           ) : (
             <div className="space-y-4">
@@ -441,6 +561,18 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
             </div>
           )}
         </>
+      )}
+
+      {activeTab === 'diagnosis' && (
+        <StudentDiagnosisPanel
+          diagnosis={diagnosis}
+          onGoToLesson={onGoToLesson}
+          onGoToAtlas={onGoToAtlas}
+          onGoToComparisons={onGoToComparisons}
+          onPracticeLessonMistakes={handlePracticeLessonMistakes}
+          onSwitchToPractice={() => setActiveTab('practice')}
+          onSwitchToSimulator={() => setActiveTab('simulator')}
+        />
       )}
 
       {activeTab === 'simulator' && (
@@ -520,6 +652,67 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
               )}
             </div>
           </div>
+
+          {simSubmitted && simDiagnosis && simDiagnosis.lessonsNeedingReview.length > 0 && (
+            <div className="rounded-xl border border-rose-200 bg-white p-5 sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-display text-base font-extrabold text-slate-900">
+                    تشخيص أخطائك في هذا النموذج والدروس المطلوب مراجعتها ({simDiagnosis.lessonsNeedingReview.length})
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-600">
+                    بناءً على إجاباتك في هذه الورقة التجريبية، يُنصح بالانتقال لمراجعة الدروس التالية قبل خوض المحاولة القادمة:
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('diagnosis')}
+                  className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-100"
+                >
+                  فتح خطة المراجعة الشاملة
+                </button>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {simDiagnosis.lessonsNeedingReview.map((item) => (
+                  <div
+                    key={item.lesson.id}
+                    className="flex flex-col justify-between rounded-lg border border-rose-200/80 bg-rose-50/40 p-4 text-xs"
+                  >
+                    <div>
+                      <div className="text-[11px] font-medium text-slate-500">
+                        الوحدة {item.unit.unitNumber} · الدرس {item.lesson.lessonNumber} ·{' '}
+                        <span className="font-mono text-rose-700">
+                          {item.wrongCount} {item.wrongCount === 1 ? 'خطأ' : 'أخطاء'}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-sm font-bold text-slate-900">{item.lesson.title}</div>
+                      <p className="mt-1.5 leading-relaxed text-slate-700">{item.suggestions[0]}</p>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-rose-200/60 pt-2.5">
+                      <button
+                        type="button"
+                        onClick={() => onGoToLesson(item.unit.id, item.lesson.id)}
+                        className="inline-flex items-center gap-1 rounded-md bg-sky-700 px-3 py-1.5 font-bold text-white hover:bg-sky-800"
+                      >
+                        <BookOpen className="h-3.5 w-3.5" />
+                        <span>مراجعة الدرس الآن</span>
+                      </button>
+                      {item.relatedLocationIds.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => onGoToAtlas(item.relatedLocationIds[0])}
+                          className="font-semibold text-emerald-800 hover:underline"
+                        >
+                          عرض في الأطلس
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-4">
             {simPaper.map((q, idx) => {

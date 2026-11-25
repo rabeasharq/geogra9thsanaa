@@ -27,8 +27,10 @@ import {
   List,
   Sparkles,
   Image as ImageIcon,
-  X
+  X,
+  Target
 } from 'lucide-react';
+import { diagnoseStudentProgress } from '../utils/studentDiagnosis';
 
 interface UnitsPortalProps {
   activeUnitId: string;
@@ -249,6 +251,11 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
   const isDone = progress.completedLessons.includes(lesson.id);
   const lessonBookmarkId = `bm-lesson-${lesson.id}`;
   const bookmarked = isBookmarked(lessonBookmarkId);
+
+  const activeLessonDiagnosis = useMemo(() => {
+    const report = diagnoseStudentProgress(progress);
+    return report.lessonsNeedingReview.find((item) => item.lesson.id === lesson.id) ?? null;
+  }, [progress, lesson.id]);
 
   const termIndex = useMemo(() => buildLessonTermIndex(lesson), [lesson]);
 
@@ -564,6 +571,40 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
               </div>
             )}
           </section>
+
+          {/* Targeted Review Reminder when student navigated here from Training mistakes */}
+          {activeLessonDiagnosis && (
+            <section className="rounded-xl border border-rose-200 bg-rose-50/60 p-4 sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <Target className="mt-0.5 h-5 w-5 shrink-0 text-rose-700" />
+                  <div>
+                    <div className="text-xs font-extrabold text-rose-900">
+                      مقترحات المراجعة لهذا الدرس (بناءً على {activeLessonDiagnosis.wrongCount}{' '}
+                      {activeLessonDiagnosis.wrongCount === 1 ? 'خطأ في التدريبات' : 'أخطاء في التدريبات'})
+                    </div>
+                    <ul className="mt-2 space-y-1 text-xs leading-relaxed text-slate-800">
+                      {activeLessonDiagnosis.suggestions.slice(0, 3).map((sug, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-600" />
+                          <span>{sug}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onGoToTraining(unit.id, lesson.id)}
+                  className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-slate-800"
+                >
+                  <CheckSquare className="h-3.5 w-3.5" />
+                  <span>إعادة اختبار الدرس بعد المراجعة</span>
+                </button>
+              </div>
+            </section>
+          )}
 
           {/* Featured Documentary Image: COLLAPSED BY DEFAULT & EXPLICITLY LABELED OUTSIDE TEXTBOOK */}
           {lesson.featuredImage && (
