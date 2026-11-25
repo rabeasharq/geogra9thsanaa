@@ -5,7 +5,28 @@ import {
   AdminUserProfileDetail,
   BookletAdminBreakdown
 } from '../hooks/useBookletTelemetry';
-import { X, Shield, Users, Download, Smartphone, Monitor, Tablet, Lock, Printer, ShieldCheck } from 'lucide-react';
+import {
+  fetchOwnerVaultPinRecord,
+  OwnerVaultRecord,
+  setupOrUpdateOwnerVaultPin,
+  verifyOwnerVaultPin
+} from '../utils/ownerPinVault';
+import type { BookletScope } from './PrintableStudyBooklet';
+import {
+  X,
+  Shield,
+  Users,
+  Download,
+  Smartphone,
+  Monitor,
+  Tablet,
+  Lock,
+  Printer,
+  ShieldCheck,
+  FileText,
+  KeyRound,
+  Unlock
+} from 'lucide-react';
 
 interface HiddenOwnerAnalyticsModalProps {
   open: boolean;
@@ -41,10 +62,33 @@ export const HiddenOwnerAnalyticsModal: React.FC<HiddenOwnerAnalyticsModalProps>
   onOpenAuditReport,
   onClose
 }) => {
-  const [tab, setTab] = useState<'active' | 'users' | 'logs'>('active');
+  const [tab, setTab] = useState<'active' | 'users' | 'logs' | 'word'>('active');
+
+  // PIN vault state for hidden Word (.docx) booklet export
+  const [vaultLoading, setVaultLoading] = useState(false);
+  const [pinRecord, setPinRecord] = useState<OwnerVaultRecord | null>(null);
+  const [pinUnlocked, setPinUnlocked] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinConfirm, setPinConfirm] = useState('');
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [pinBusy, setPinBusy] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockUntilMs, setLockUntilMs] = useState(0);
+  const [wordScope, setWordScope] = useState<BookletScope>('full');
+  const [exportingWord, setExportingWord] = useState(false);
+  const [exportNotice, setExportNotice] = useState<string | null>(null);
+  const [changingPin, setChangingPin] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setPinUnlocked(false);
+      setPinInput('');
+      setPinConfirm('');
+      setPinError(null);
+      setChangingPin(false);
+      setExportNotice(null);
+      return;
+    }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
@@ -52,7 +96,102 @@ export const HiddenOwnerAnalyticsModal: React.FC<HiddenOwnerAnalyticsModalProps>
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open || tab !== 'word') return;
+    let cancelled = false;
+    setVaultLoading(true);
+    setPinError(null);
+    void fetchOwnerVaultPinRecord()
+      .then((rec) => {
+        if (!cancelled) setPinRecord(rec);
+      })
+      .catch(() => {
+        if (!cancelled) setPinError('تعذر الاتصال بخزنة الرقم السري السحابية.');
+      })
+      .finally(() => {
+        if (!cancelled) setVaultLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, tab]);
+
   if (!open) return null;
+
+  const handleCreateOrChangePin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPinError(null);
+    if (pinInput.trim().length < 4) {
+      setPinError('الرقم السري يجب أن لا يقل عن 4 خانات.');
+      return;
+    }
+    if (pinInput.trim() !== pinConfirm.trim()) {
+      setPinError('الرقم السري وتأكيده غير متطابقين.');
+      return;
+    }
+    setPinBusy(true);
+    try {
+      const saved = await setupOrUpdateOwnerVaultPin(pinInput, Boolean(pinRecord));
+      setPinRecord(saved);
+      setPinUnlocked(true);
+      setChangingPin(false);
+      setPinInput('');
+      setPinConfirm('');
+      setFailedAttempts(0);
+      setExportNotice('تم حفظ الرقم السري وتشفيره بنجاح.');
+    } catch (err) {
+      setPinError(err instanceof Error ? err.message : 'تعذر حفظ الرقم السري.');
+    } finally {
+      setPinBusy(false);
+    }
+  };
+
+  const handleVerifyPin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pinRecord) return;
+    const now = Date.now();
+    if (lockUntilMs > now) {
+      const secs = Math.ceil((lockUntilMs - now) / 1000);
+      setPinError(`تم قفل المحاولات مؤقتاً، انتظر ${secs} ثانية.`);
+      return;
+    }
+    setPinError(null);
+    setPinBusy(true);
+    try {
+      const ok = await verifyOwnerVaultPin(pinInput, pinRecord);
+      if (ok) {
+        setPinUnlocked(true);
+        setPinInput('');
+        setFailedAttempts(0);
+      } else {
+        const nextFails = failedAttempts + 1;
+        setFailedAttempts(nextFails);
+        if (nextFails >= 5) {
+          setLockUntilMs(Date.now() + 60_000);
+          setPinError('تجاوزت الحد المسموح (5 محاولات). تم القفل لمدة 60 ثانية.');
+        } else {
+          setPinError(`الرقم السري غير صحيح (المحاولة ${nextFails} من 5).`);
+        }
+      }
+    } finally {
+      setPinBusy(false);
+    }
+  };
+
+  const handleDownloadWord = async () => {
+    if (!pinUnlocked) return;
+    setExportingWord(true);
+    setExportNotice(null);
+    try {
+      const { exportBookletAsWordDocx } = await import('../utils/wordBookletExporter');
+      await exportBookletAsWordDocx(wordScope);
+      setExportNotice('تم توليد وتنزيل ملف الوورد (.docx) بنجاح مع العلامة المائية للمعد والمراجع.');
+    } catch (err) {
+      setPinError(err instanceof Error ? err.message : 'تعذر توليد ملف الوورد.');
+    } finally {
+      setExportingWord(false);
+    }
+  };
 
   const DeviceIcon = ({ type }: { type: string }) => {
     if (type === 'mobile') return <Smartphone className="h-3.5 w-3.5 text-sky-700" />;
@@ -175,6 +314,18 @@ export const HiddenOwnerAnalyticsModal: React.FC<HiddenOwnerAnalyticsModalProps>
           >
             <Download className="h-3.5 w-3.5" />
             <span>التحميلات ({downloadLogs.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('word')}
+            className={`inline-flex min-h-[38px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold ${
+              tab === 'word'
+                ? 'bg-emerald-800 text-white'
+                : 'border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+            }`}
+          >
+            <Lock className="h-3.5 w-3.5" />
+            <span>ملف الوورد (برقم سري)</span>
           </button>
         </div>
 
@@ -324,6 +475,208 @@ export const HiddenOwnerAnalyticsModal: React.FC<HiddenOwnerAnalyticsModalProps>
                     ))}
                   </tbody>
                 </table>
+              )}
+            </div>
+          )}
+
+          {tab === 'word' && (
+            <div className="mx-auto max-w-xl space-y-4 py-2">
+              {vaultLoading ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-600">
+                  جارٍ التحقق من خزنة الرقم السري السحابية...
+                </div>
+              ) : !pinRecord || changingPin ? (
+                <form
+                  onSubmit={(e) => void handleCreateOrChangePin(e)}
+                  className="space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-5"
+                >
+                  <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                    <KeyRound className="h-4 w-4 text-emerald-700" />
+                    <span>
+                      {changingPin
+                        ? 'تغيير الرقم السري الخاص بملف الوورد'
+                        : 'تعيين الرقم السري الخاص بملف الوورد (لأول مرة)'}
+                    </span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-600">
+                    يُشفّر هذا الرقم السري بخوارزمية PBKDF2-SHA256 ويُحفظ بصيغة مشفّرة في حساب المالك فقط لقفل تنزيل ملف الوورد (.docx).
+                  </p>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-800">
+                        الرقم السري الجديد (4 خانات فأكثر)
+                      </label>
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        autoComplete="new-password"
+                        value={pinInput}
+                        onChange={(e) => setPinInput(e.target.value)}
+                        placeholder="أدخل الرقم السري..."
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-800">
+                        تأكيد الرقم السري
+                      </label>
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        autoComplete="new-password"
+                        value={pinConfirm}
+                        onChange={(e) => setPinConfirm(e.target.value)}
+                        placeholder="أعد إدخال الرقم السري..."
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-600"
+                      />
+                    </div>
+                  </div>
+
+                  {pinError && (
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800">
+                      {pinError}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="submit"
+                      disabled={pinBusy}
+                      className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-60"
+                    >
+                      <Lock className="h-3.5 w-3.5" />
+                      <span>{pinBusy ? 'جارٍ الحفظ...' : 'حفظ الرقم السري وفتح القسم'}</span>
+                    </button>
+                    {changingPin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setChangingPin(false);
+                          setPinInput('');
+                          setPinConfirm('');
+                          setPinError(null);
+                        }}
+                        className="min-h-[40px] rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                      >
+                        إلغاء
+                      </button>
+                    )}
+                  </div>
+                </form>
+              ) : !pinUnlocked ? (
+                <form
+                  onSubmit={(e) => void handleVerifyPin(e)}
+                  className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-5"
+                >
+                  <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                    <Lock className="h-4 w-4 text-sky-700" />
+                    <span>قسم محمي برقم سري — تنزيل الملزمة بصيغة Word (.docx)</span>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    أدخل الرقم السري الخاص بمالك التطبيق لفتح خيار تنزيل الملزمة كملف وورد.
+                  </p>
+                  <div>
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="current-password"
+                      value={pinInput}
+                      onChange={(e) => setPinInput(e.target.value)}
+                      placeholder="أدخل الرقم السري..."
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-sky-600"
+                    />
+                  </div>
+                  {pinError && (
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800">
+                      {pinError}
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={pinBusy}
+                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-slate-900 px-5 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-60"
+                  >
+                    <Unlock className="h-3.5 w-3.5" />
+                    <span>{pinBusy ? 'جارٍ التحقق...' : 'فتح التنزيل'}</span>
+                  </button>
+                </form>
+              ) : (
+                <div className="space-y-4 rounded-xl border border-emerald-200 bg-white p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2 text-sm font-bold text-emerald-900">
+                      <FileText className="h-4 w-4 text-emerald-700" />
+                      <span>تصدير الملزمة بصيغة Word (.docx) للمالك</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setChangingPin(true);
+                          setPinInput('');
+                          setPinConfirm('');
+                          setPinError(null);
+                        }}
+                        className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
+                      >
+                        تغيير الرقم السري
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPinUnlocked(false);
+                          setExportNotice(null);
+                        }}
+                        className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
+                      >
+                        قفل
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-xs leading-relaxed text-slate-600">
+                    يُنشئ ملف وورد (.docx) منسّق بالكامل بالاتجاه من اليمين إلى اليسار مع العلامة المائية لاسم المعد والمراجع (أ. إبراهيم أحمد متاش / أ. مجدي محمد النوفاني) في كل صفحة.
+                  </p>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-slate-800">
+                      نطاق الملزمة للتصدير:
+                    </label>
+                    <select
+                      value={wordScope}
+                      onChange={(e) => setWordScope(e.target.value as BookletScope)}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800"
+                    >
+                      <option value="full">الملزمة الشاملة الكاملة (الوحدات 1–4)</option>
+                      <option value="unit-1">الوحدة 1: البيئة الطبيعية لليمن</option>
+                      <option value="unit-2">الوحدة 2: السكان والاقتصاد في اليمن</option>
+                      <option value="unit-3">الوحدة 3: البيئة الطبيعية للوطن العربي</option>
+                      <option value="unit-4">الوحدة 4: السكان والاقتصاد في الوطن العربي</option>
+                      <option value="maps-tables">كتيّب الخرائط والجداول المستقلة فقط</option>
+                    </select>
+                  </div>
+
+                  {exportNotice && (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+                      {exportNotice}
+                    </div>
+                  )}
+                  {pinError && (
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800">
+                      {pinError}
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={exportingWord}
+                    onClick={() => void handleDownloadWord()}
+                    className="inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-2.5 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-60"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>{exportingWord ? 'جارٍ تجهيز ملف الوورد (.docx)...' : 'تنزيل الملزمة ملف وورد (.docx)'}</span>
+                  </button>
+                </div>
               )}
             </div>
           )}

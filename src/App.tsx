@@ -22,7 +22,7 @@ import { OfflineIndicator } from './components/PWAInstallButton';
 import { BookletScope } from './components/PrintableStudyBooklet';
 import { HiddenOwnerAnalyticsModal } from './components/HiddenOwnerAnalyticsModal';
 import { useBookletTelemetry } from './hooks/useBookletTelemetry';
-import { Users, BarChart3, LogIn, LogOut } from 'lucide-react';
+import { Users, BarChart3, LogIn, LogOut, AlertCircle, X } from 'lucide-react';
 
 class PortalErrorBoundary extends React.Component<
   { children: React.ReactNode; onReset: () => void },
@@ -489,6 +489,30 @@ export default function App() {
               )}
             </div>
           </div>
+
+          {telemetry.syncError && (
+            <div
+              role="alert"
+              className="mx-auto mb-2.5 flex max-w-[1400px] items-start justify-between gap-2 px-4 sm:px-6"
+            >
+              <div className="flex flex-1 items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-900">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" />
+                <span className="leading-relaxed">
+                  {telemetry.syncError.startsWith('{')
+                    ? 'تعذر الاتصال بخدمة المزامنة السحابية حالياً؛ تأكد من اتصال الإنترنت وأعد المحاولة.'
+                    : telemetry.syncError}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={telemetry.clearSyncError}
+                aria-label="إغلاق التنبيه"
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-amber-200 bg-white text-amber-800 hover:bg-amber-100"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </footer>
 

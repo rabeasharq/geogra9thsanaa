@@ -16,9 +16,11 @@ import {
 import {
   auth,
   db,
+  formatFirebaseAuthError,
   handleFirestoreError,
   onAuthStateChanged,
   OperationType,
+  resolveRedirectSignIn,
   signInWithGoogleAccount,
   signOutAccount,
   User
@@ -161,16 +163,38 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
   const presenceCreatedRef = useRef(false);
   const countedInGlobalActiveRef = useRef(false);
 
-  // 1. Track Firebase Auth state
+  // 1. Track Firebase Auth state & resolve standalone redirect logins
   useEffect(() => {
+    let active = true;
+    void resolveRedirectSignIn()
+      .then((redirectedUser) => {
+        if (active && redirectedUser) {
+          setUser(redirectedUser);
+          setSyncError(null);
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setSyncError(err instanceof Error ? err.message : formatFirebaseAuthError(err));
+        }
+      });
+
     const unsub = onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
-      if (!nextUser || !nextUser.emailVerified) {
+      if (nextUser) {
+        setSyncError(null);
+      } else {
+        setIsAdmin(false);
+      }
+      if (nextUser && !nextUser.emailVerified) {
         setIsAdmin(false);
       }
       setAuthReady(true);
     });
-    return () => unsub();
+    return () => {
+      active = false;
+      unsub();
+    };
   }, []);
 
   // 1b. Server-side admin role verification via Firestore rules (zero owner email in client bundle)
@@ -628,13 +652,23 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
     [user, isReadingBooklet]
   );
 
+  const clearSyncError = useCallback(() => {
+    setSyncError(null);
+  }, []);
+
   const handleSignIn = useCallback(async () => {
     setAuthBusy(true);
     setSyncError(null);
     try {
       await signInWithGoogleAccount();
     } catch (err) {
-      setSyncError(err instanceof Error ? err.message : 'تعذر تسجيل الدخول.');
+      const msg =
+        err && typeof err === 'object' && 'code' in err
+          ? formatFirebaseAuthError(err)
+          : err instanceof Error
+            ? err.message
+            : 'تعذر تسجيل الدخول.';
+      setSyncError(msg);
     } finally {
       setAuthBusy(false);
     }
@@ -716,7 +750,8 @@ export function useBookletTelemetry(activeScope: BookletScope, isReadingBooklet:
     adminDownloadLogs: isAdmin ? adminDownloadLogs : [],
     recordBookletAction,
     handleSignIn,
-    handleSignOut
+    handleSignOut,
+    clearSyncError
   };
 }
 

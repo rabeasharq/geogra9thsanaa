@@ -221,6 +221,34 @@
         }
       },
       "required": ["uid", "role", "createdAt"]
+    },
+    "OwnerVaultSecret": {
+      "title": "OwnerVaultSecret",
+      "description": "PBKDF2 salted hash of the owner's secret PIN protecting private Word (.docx) export.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "pinSalt": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 128
+        },
+        "pinHash": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 128
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "pinSalt", "pinHash", "updatedAt"]
     }
   },
   "firestore": {
@@ -243,6 +271,10 @@
     "/admins/{userId}": {
       "schema": { "$ref": "#/entities/AdminUser" },
       "description": "Authorized admin role registry."
+    },
+    "/owner_vault/{userId}": {
+      "schema": { "$ref": "#/entities/OwnerVaultSecret" },
+      "description": "Owner-only PBKDF2 PIN hash gating private Word export inside the hidden owner panel."
     }
   }
 }
