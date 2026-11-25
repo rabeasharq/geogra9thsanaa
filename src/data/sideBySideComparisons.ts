@@ -51,6 +51,16 @@ export const SIDE_BY_SIDE_GROUPS: SideBySideGroup[] = [
     id: 'dams_landmarks',
     label: 'السدود والمعالم التاريخية',
     defaultPair: ['sbs-abyan-coast', 'sbs-ghadeer-coast']
+  },
+  {
+    id: 'yemen_natural_regions',
+    label: 'تضاريس ومناخ اليمن (الوحدة 1)',
+    defaultPair: ['sbs-tihamah-plain', 'sbs-western-highlands']
+  },
+  {
+    id: 'arab_physical_features',
+    label: 'تضاريس وممرات الوطن العربي (الوحدة 3)',
+    defaultPair: ['sbs-toubkal-peak', 'sbs-nabi-shuayb-arab']
   }
 ];
 
@@ -456,5 +466,111 @@ export const SIDE_BY_SIDE_ENTITIES: SideBySideEntity[] = [
       { label: 'السدود المقابلة بالدرس', value: 'سد كمران وسد مختان (ص 24 – 25)' }
     ],
     ministerialDistinction: 'يجمع بين درس المياه (ص 25) ودرس السياحة (ص 54) في محافظة مأرب.'
+  },
+
+  // 7. Yemen Natural Regions (Unit 1)
+  {
+    id: 'sbs-tihamah-plain',
+    name: 'السهل الساحلي الغربي (تهامة)',
+    groupId: 'yemen_natural_regions',
+    governorateOrCountry: 'الغرب على البحر الأحمر',
+    categoryLabel: 'سهل ساحلي (الوحدة 1)',
+    pageRef: 'ص 14، 19',
+    unitId: 'unit-1',
+    lessonId: 'u1-l2',
+    atlasLocationId: 'loc-tihamah',
+    attributes: [
+      { label: 'الامتداد والارتفاع', value: 'من الشيخ سعيد جنوباً حتى الحدود السعودية شمالاً · اتساع 20–60 كم · أقصى ارتفاع 200م' },
+      { label: 'أبرز الأودية', value: 'مور، سردد، سهام، رماع، زبيد، رسيان، موزع' },
+      { label: 'الإقليم المناخي', value: 'إقليم السهول الساحلية: شبه مداري حار رطب بمدى حراري صغير' }
+    ],
+    ministerialDistinction: 'أودية تهامة تصب غرباً في البحر الأحمر، وتُميَّز عن أودية السهل الجنوبي (تبن وبنا وأحور والمسيلة).'
+  },
+  {
+    id: 'sbs-western-highlands',
+    name: 'المرتفعات الجبلية الغربية',
+    groupId: 'yemen_natural_regions',
+    governorateOrCountry: 'العمود الفقري من صعدة إلى لحج',
+    categoryLabel: 'مرتفعات وقيعان (الوحدة 1)',
+    pageRef: 'ص 14 – 15، 19',
+    unitId: 'unit-1',
+    lessonId: 'u1-l2',
+    atlasLocationId: 'loc-nabi-shuayb',
+    attributes: [
+      { label: 'أعلى القمم والقيعان', value: 'جبل النبي شعيب (3,670م) وجبل أسبيل (3,190م) + قيعان صعدة والبون وصنعاء وجهران' },
+      { label: 'تغير الحرارة بالارتفاع', value: 'تنخفض درجة الحرارة 1°م كلما ارتفعنا 150م عن سطح البحر' },
+      { label: 'الإقليم المناخي (>1500م)', value: 'معتدل صيفاً بارد شتاءً بمدى حراري كبير وقد يتكون الصقيع في القيعان' }
+    ],
+    ministerialDistinction: 'النبي شعيب (3,670م) غرب صنعاء أعلى قمة في اليمن وشبه الجزيرة العربية، ويتلقى النطاق الغربي أمطاراً صيفية موسمية.'
+  },
+  {
+    id: 'sbs-eastern-plateaus',
+    name: 'الهضاب والسهول الشرقية',
+    groupId: 'yemen_natural_regions',
+    governorateOrCountry: 'شرق وشمال شرق المرتفعات',
+    categoryLabel: 'هضاب داخلية وصحراوية (الوحدة 1)',
+    pageRef: 'ص 15، 19',
+    unitId: 'unit-1',
+    lessonId: 'u1-l2',
+    atlasLocationId: 'loc-hadramout-plateau',
+    attributes: [
+      { label: 'أبرز الهضاب', value: 'هضبة البيضاء، رداع، الجدعان بمأرب، وهضبة حضرموت (شمالية وجنوبية يفصلهما وادي حضرموت)' },
+      { label: 'أبرز الأودية', value: 'أودية الجوف وأذنة وبيحان المتجهة نحو الصحراء الشرقية' },
+      { label: 'الإقليم المناخي', value: 'إقليم المناطق الداخلية والشرقية: مناخ صحراوي جاف قاري يقل مطره نحو الربع الخالي' }
+    ],
+    ministerialDistinction: 'تنتهي أطرافها الشمالية الشرقية بصحراء الربع الخالي، ويفصل وادي حضرموت ثنيتي هضبة حضرموت.'
+  },
+
+  // 8. Arab World Physical Features (Unit 3)
+  {
+    id: 'sbs-toubkal-peak',
+    name: 'جبل طوبقال (جبال أطلس)',
+    groupId: 'arab_physical_features',
+    governorateOrCountry: 'المملكة المغربية (الجناح الأفريقي)',
+    categoryLabel: 'جبال التوائية (الوحدة 3)',
+    pageRef: 'ص 67 – 68',
+    unitId: 'unit-3',
+    lessonId: 'u3-l2',
+    atlasLocationId: 'loc-atlas-mountains',
+    attributes: [
+      { label: 'الارتفاع والترتيب', value: '4,165 متر — أعلى قمة جبلية في الوطن العربي كله' },
+      { label: 'نوع النشأة التضاريسية', value: 'جبال التوائية (مع جبال عمان وزاجروس وطوروس وكردستان)' },
+      { label: 'الإقليم المناخي السائد', value: 'إقليم البحر المتوسط في الأطراف الشمالية الغربية' }
+    ],
+    ministerialDistinction: 'يُفرَّق بين طوبقال (4,165م أعلى قمة بالوطن العربي) والنبي شعيب (3,670م أعلى قمة بشبه الجزيرة العربية).'
+  },
+  {
+    id: 'sbs-nabi-shuayb-arab',
+    name: 'جبل النبي شعيب (مرتفعات اليمن)',
+    groupId: 'arab_physical_features',
+    governorateOrCountry: 'الجمهورية اليمنية (الجناح الآسيوي)',
+    categoryLabel: 'جبال انكسارية وبركانية (الوحدة 3)',
+    pageRef: 'ص 67 – 68',
+    unitId: 'unit-3',
+    lessonId: 'u3-l2',
+    atlasLocationId: 'loc-nabi-shuayb',
+    attributes: [
+      { label: 'الارتفاع والترتيب', value: '3,670 متر — أعلى قمة في شبه الجزيرة العربية واليمن' },
+      { label: 'نوع النشأة في الكتاب', value: 'جبال انكسارية (مرتفعات اليمن والحجاز وعسير والشام) مع أجزاء بركانية' },
+      { label: 'الإقليم المناخي', value: 'ضمن نطاق الإقليم المداري في جنوب غرب شبه الجزيرة العربية' }
+    ],
+    ministerialDistinction: 'انتبه في التصنيف: جبال أطلس وعمان التوائية، بينما مرتفعات اليمن والحجاز والبحر الأحمر والشام انكسارية.'
+  },
+  {
+    id: 'sbs-arab-wings-ratio',
+    name: 'الجناح الأفريقي مقابل الجناح الآسيوي',
+    groupId: 'arab_physical_features',
+    governorateOrCountry: '22 دولة عربية (10 أفريقية · 12 آسيوية)',
+    categoryLabel: 'التوزيع القاري (الوحدة 3)',
+    pageRef: 'ص 61، 64',
+    unitId: 'unit-3',
+    lessonId: 'u3-l1',
+    atlasLocationId: 'loc-arab-world-center',
+    attributes: [
+      { label: 'نسبة المساحة (من 13.3 مليون كم²)', value: '71% في الجناح الأفريقي و29% في الجناح الآسيوي' },
+      { label: 'عدد الدول في كل جناح', value: '10 دول في أفريقيا (منها جزر القمر) مقابل 12 دولة في آسيا (منها اليمن)' },
+      { label: 'الهضبة الرئيسة', value: 'هضبة أفريقيا الشمالية (الأوسع) مقابل هضبة شبه الجزيرة العربية' }
+    ],
+    ministerialDistinction: 'الأكثر مساحة (71%) هو الجناح الأفريقي رغم أن عدد دوله أقل (10 دول)، بينما الجناح الآسيوي 12 دولة بمساحة 29%.'
   }
 ];

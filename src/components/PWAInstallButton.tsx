@@ -278,7 +278,7 @@ export const OfflineIndicator: React.FC = () => {
   return (
     <div
       role="status"
-      className="no-print fixed bottom-4 left-4 z-50 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-600 px-3.5 py-2 text-xs font-semibold text-white shadow-lg"
+      className="no-print fixed bottom-20 left-4 z-50 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-600 px-3.5 py-2 text-xs font-semibold text-white shadow-lg lg:bottom-4"
     >
       <WifiOff className="h-4 w-4 shrink-0" />
       <span>وضع عدم الاتصال — جميع الدروس والأطلس تعمل بدون نت</span>

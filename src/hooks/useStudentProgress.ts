@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { BookmarkItem, PortalId, StudentProgress } from '../types/textbook';
+import { BookmarkItem, PortalId, StudentProgress, StudyFocusScope } from '../types/textbook';
 
 const STORAGE_KEY = 'yemen_geo_grade9_2026_progress_v1';
+
+const VALID_STUDY_FOCUS: StudyFocusScope[] = ['active-unit', 'semester-1', 'semester-2', 'all'];
 
 const DEFAULT_PROGRESS: StudentProgress = {
   lastLocation: {
@@ -11,6 +13,7 @@ const DEFAULT_PROGRESS: StudentProgress = {
     atlasLocationId: 'loc-yemen-center',
     studyTab: 'summary'
   },
+  studyFocus: 'active-unit',
   completedLessons: [],
   bookmarks: [],
   quizAnswers: {}
@@ -21,8 +24,13 @@ function loadInitialProgress(): StudentProgress {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_PROGRESS;
     const parsed = JSON.parse(raw) as Partial<StudentProgress>;
+    const studyFocus =
+      parsed.studyFocus && VALID_STUDY_FOCUS.includes(parsed.studyFocus)
+        ? parsed.studyFocus
+        : 'active-unit';
     return {
       lastLocation: { ...DEFAULT_PROGRESS.lastLocation, ...(parsed.lastLocation ?? {}) },
+      studyFocus,
       completedLessons: Array.isArray(parsed.completedLessons) ? parsed.completedLessons : [],
       bookmarks: Array.isArray(parsed.bookmarks) ? parsed.bookmarks : [],
       quizAnswers: parsed.quizAnswers && typeof parsed.quizAnswers === 'object' ? parsed.quizAnswers : {}
@@ -52,6 +60,13 @@ export function useStudentProgress() {
     },
     []
   );
+
+  const setStudyFocus = useCallback((studyFocus: StudyFocusScope) => {
+    setProgress((prev) => ({
+      ...prev,
+      studyFocus
+    }));
+  }, []);
 
   const toggleLessonComplete = useCallback((lessonId: string) => {
     setProgress((prev) => {
@@ -111,6 +126,7 @@ export function useStudentProgress() {
   return {
     progress,
     updateLastLocation,
+    setStudyFocus,
     setPortal,
     toggleLessonComplete,
     toggleBookmark,

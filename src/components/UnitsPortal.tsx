@@ -50,6 +50,8 @@ interface ActivePopoverState {
   rect: { top: number; bottom: number; left: number; right: number; width: number };
 }
 
+type LessonTab = 'explain' | 'facts' | 'maps' | 'activities' | 'all';
+
 function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -231,6 +233,7 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
   onGoToTraining
 }) => {
   const [sidebarOpenMobile, setSidebarOpenMobile] = useState(false);
+  const [lessonTab, setLessonTab] = useState<LessonTab>('explain');
 
   // Optional external enrichments MUST start collapsed/hidden by default
   const [showFeaturedImage, setShowFeaturedImage] = useState(false);
@@ -259,8 +262,9 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
 
   const termIndex = useMemo(() => buildLessonTermIndex(lesson), [lesson]);
 
-  // Reset collapsed states and close any floating popover whenever the lesson changes
+  // Reset collapsed states, tab view, and close any floating popover whenever the lesson changes
   useEffect(() => {
+    setLessonTab('explain');
     setShowFeaturedImage(false);
     setExpandedErrata({});
     setExpandedTableNotes({});
@@ -342,17 +346,78 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">
-      {/* Mobile Sidebar Toggle */}
-      <div className="mb-4 flex items-center justify-between lg:hidden">
+      {/* Mobile 1-Row Quick Lesson Switcher + Index Toggle */}
+      <div className="mb-4 flex items-center gap-1.5 lg:hidden">
+        <button
+          type="button"
+          onClick={() => prev && onSelectLesson(prev.unitId, prev.id)}
+          disabled={!prev}
+          aria-label="الدرس السابق"
+          title={prev ? `السابق: ${prev.title}` : 'بداية المنهج'}
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-40"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+
+        <div className="relative min-w-0 flex-1">
+          <label htmlFor="mobile-lesson-switcher" className="sr-only">
+            اختيار الدرس السريع
+          </label>
+          <select
+            id="mobile-lesson-switcher"
+            value={lesson.id}
+            onChange={(e) => {
+              const targetId = e.target.value;
+              const targetUnit = TEXTBOOK_UNITS.find((u) =>
+                u.lessons.some((l) => l.id === targetId)
+              );
+              if (targetUnit) {
+                onSelectLesson(targetUnit.id, targetId);
+                setSidebarOpenMobile(false);
+              }
+            }}
+            className="h-10 w-full truncate rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
+          >
+            {TEXTBOOK_UNITS.map((u) => (
+              <optgroup key={u.id} label={`الوحدة ${u.unitNumber}: ${u.title}`}>
+                {u.lessons.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    د{l.lessonNumber}: {l.title} (ص {l.pageRange})
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => next && onSelectLesson(next.unitId, next.id)}
+          disabled={!next}
+          aria-label="الدرس التالي"
+          title={next ? `التالي: ${next.title}` : 'نهاية المنهج'}
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-40"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
         <button
           type="button"
           onClick={() => setSidebarOpenMobile((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-800"
+          aria-expanded={sidebarOpenMobile}
+          title="فتح قائمة إنجاز الدروس"
+          className={`inline-flex h-10 shrink-0 items-center gap-1 rounded-lg border px-2.5 text-xs font-semibold transition-colors ${
+            sidebarOpenMobile
+              ? 'border-sky-600 bg-sky-600 text-white'
+              : 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
+          }`}
         >
-          <List className="h-4 w-4 text-sky-600" />
-          <span>{sidebarOpenMobile ? 'إخفاء فهرس الوحدات' : 'فهرس الوحدات والدروس (18 درساً)'}</span>
+          <List className={`h-4 w-4 ${sidebarOpenMobile ? 'text-white' : 'text-sky-600'}`} />
+          <span>فهرس</span>
+          <span className="font-mono text-[10px] tabular-nums opacity-80">
+            {progress.completedLessons.length}/18
+          </span>
         </button>
-        <span className="font-mono text-xs tabular-nums text-slate-500">ص {lesson.pageRange}</span>
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-12">
@@ -485,36 +550,19 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
               الدرس {lesson.lessonNumber}: {lesson.title}
             </h1>
 
-            {/* Cross-Portal Links Bar */}
+            {/* Focused Lesson Top Actions: Atlas Map Shortcut + Word Enrichment Toggle */}
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4 text-xs">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-slate-500">ربط المداخل لهذا الدرس:</span>
                 {relatedLocations.length > 0 && (
                   <button
                     type="button"
                     onClick={() => onGoToAtlas(relatedLocations[0].id)}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 font-medium text-emerald-800 hover:bg-emerald-100"
+                    className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 font-semibold text-emerald-800 hover:bg-emerald-100"
                   >
                     <Compass className="h-3.5 w-3.5" />
-                    <span>استكشف في الأطلس ({relatedLocations.length})</span>
+                    <span>خريطة هذا الدرس في الأطلس ({relatedLocations.length})</span>
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => onGoToStudyGuide(unit.id)}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 font-medium text-amber-800 hover:bg-amber-100"
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                  <span>ملزمة الوحدة {unit.unitNumber}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onGoToTraining(unit.id, lesson.id)}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 font-medium text-indigo-800 hover:bg-indigo-100"
-                >
-                  <CheckSquare className="h-3.5 w-3.5" />
-                  <span>تدريبات الدرس ({relatedQuestions.length})</span>
-                </button>
               </div>
 
               {/* Word-level floating enrichment toggle */}
@@ -525,7 +573,7 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
                   setActivePopover(null);
                 }}
                 aria-pressed={wordEnrichmentEnabled}
-                className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${
+                className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${
                   wordEnrichmentEnabled
                     ? 'border-amber-300 bg-amber-50/80 text-amber-900'
                     : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
@@ -534,15 +582,56 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
                 <Sparkles className="h-3.5 w-3.5 text-amber-600" />
                 <span>
                   {wordEnrichmentEnabled
-                    ? 'الإثراء الفوري عند الضغط على الكلمة: مفعّل'
+                    ? 'الإثراء الفوري للكلمات: مفعّل'
                     : 'تفعيل الإثراء الفوري للكلمات'}
                 </span>
               </button>
             </div>
           </header>
 
-          {/* Learning Objectives (Official Textbook) */}
-          <section className="rounded-xl border border-slate-200 bg-white p-6">
+          {/* Clean Wrapping In-Lesson Tabs (Never clips on narrow mobile) */}
+          <nav
+            aria-label="أقسام الدرس التفاعلية"
+            className="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1.5"
+          >
+            {(
+              [
+                { id: 'explain' as const, label: 'شرح الدرس' },
+                {
+                  id: 'facts' as const,
+                  label: `المفاهيم والأرقام (${lesson.keyFacts.length + lesson.concepts.length})`
+                },
+                { id: 'maps' as const, label: `خرائط الدرس (${relatedLocations.length})` },
+                {
+                  id: 'activities' as const,
+                  label: `الأنشطة والتقويم (${lesson.activities.length + lesson.evaluationPrompts.length})`
+                },
+                { id: 'all' as const, label: 'عرض الكل' }
+              ] as const
+            ).map((tab) => {
+              const active = lessonTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setLessonTab(tab.id)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`min-h-[38px] rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    active
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          {(lessonTab === 'explain' || lessonTab === 'all') && (
+            <>
+              {/* Learning Objectives (Official Textbook) */}
+              <section className="rounded-xl border border-slate-200 bg-white p-6">
             <h2 className="font-display text-base font-bold text-slate-900">أهداف الدرس المقررة</h2>
             <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-700">
               {lesson.objectives.map((obj, idx) => (
@@ -661,6 +750,27 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
 
           {/* Core Textbook Content Sections */}
           <section className="space-y-5">
+            {lesson.sections.length >= 3 && (
+              <nav
+                aria-label="فهرس أقسام الدرس"
+                className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs"
+              >
+                <span className="font-semibold text-slate-500">أقسام الدرس:</span>
+                {lesson.sections.map((sec, idx) => (
+                  <button
+                    key={sec.id}
+                    type="button"
+                    onClick={() =>
+                      document.getElementById(sec.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }
+                    className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-800"
+                  >
+                    {idx + 1}. {sec.title}
+                  </button>
+                ))}
+              </nav>
+            )}
+
             {wordEnrichmentEnabled && (
               <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs text-slate-600">
                 <span>
@@ -673,7 +783,11 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
               const errataOpen = Boolean(expandedErrata[sec.id]);
 
               return (
-                <div key={sec.id} className="rounded-xl border border-slate-200 bg-white p-6">
+                <div
+                  key={sec.id}
+                  id={sec.id}
+                  className="scroll-mt-20 rounded-xl border border-slate-200 bg-white p-6"
+                >
                   <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-100 pb-3">
                     <h2 className="font-display text-lg font-bold text-slate-900">{sec.title}</h2>
                     <span className="font-mono text-xs tabular-nums text-slate-500">{sec.pageRef}</span>
@@ -850,8 +964,11 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
 
           {/* Optional Interactive Simulation/Calculator (Already collapsed by default inside InteractiveLessonLab) */}
           {lesson.interactiveLab && <InteractiveLessonLab lab={lesson.interactiveLab} />}
+            </>
+          )}
 
           {/* Key Facts & Concepts Grid (Official Textbook) */}
+          {(lessonTab === 'facts' || lessonTab === 'all') && (
           <div className="grid gap-6 md:grid-cols-2">
             <section className="rounded-xl border border-slate-200 bg-white p-6">
               <h3 className="font-display text-base font-bold text-slate-900">
@@ -913,9 +1030,11 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
               </div>
             </section>
           </div>
+          )}
 
           {/* Linked Atlas Locations */}
-          {relatedLocations.length > 0 && (
+          {((lessonTab === 'maps' && relatedLocations.length > 0) ||
+            (lessonTab === 'all' && relatedLocations.length > 0)) && (
             <section className="rounded-xl border border-slate-200 bg-white p-6">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="font-display text-base font-bold text-slate-900">
@@ -945,7 +1064,37 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
             </section>
           )}
 
+          {lessonTab === 'maps' && relatedLocations.length === 0 && (
+            <section className="rounded-xl border border-slate-200 bg-white p-6 text-center">
+              <Compass className="mx-auto h-7 w-7 text-emerald-600" />
+              <h3 className="font-display mt-2 text-base font-bold text-slate-900">
+                لا توجد نقاط أطلس منفردة مسجلة لهذا الدرس
+              </h3>
+              <p className="mt-1 text-xs text-slate-600">
+                يركز هذا الدرس على المفاهيم التحليلية أو الإحصائية، ويمكنك استعراض خرائط اليمن والوطن العربي الشاملة في الأطلس.
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onGoToAtlas('loc-yemen-sanaa')}
+                  className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                >
+                  <Compass className="h-3.5 w-3.5" />
+                  <span>فتح الأطلس التفاعلي</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLessonTab('explain')}
+                  className="inline-flex min-h-[38px] items-center rounded-lg border border-slate-300 bg-slate-50 px-4 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-100"
+                >
+                  العودة إلى شرح الدرس
+                </button>
+              </div>
+            </section>
+          )}
+
           {/* Activities & Thinking Card & Lesson Evaluation */}
+          {(lessonTab === 'activities' || lessonTab === 'all') && (
           <section className="rounded-xl border border-slate-200 bg-white p-6">
             <h3 className="font-display text-base font-bold text-slate-900">
               الأنشطة وبطاقة التفكير وتقويم الدرس
@@ -1007,6 +1156,84 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
                   <li key={i}>{p}</li>
                 ))}
               </ul>
+            </div>
+
+            {unit.unitEvaluationSummary.length > 0 && (
+              <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50/50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-900">
+                  <span>خلاصة تقويم الوحدة {unit.unitNumber}</span>
+                  <span className="font-mono font-normal text-slate-500">
+                    {unit.unitEvaluationPage}
+                  </span>
+                </div>
+                <ul className="mt-2 space-y-1 text-xs leading-relaxed text-slate-700">
+                  {unit.unitEvaluationSummary.map((summaryItem, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-600" />
+                      <span>{summaryItem}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+          )}
+
+          {/* Guided Next Step Progression Card after finishing the lesson */}
+          <section
+            aria-label="الخطوة التالية بعد قراءة الدرس"
+            className="rounded-xl border border-sky-200 bg-sky-50/50 p-5"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="font-display text-sm font-extrabold text-slate-900">
+                  خطوتك التالية بعد قراءة «{lesson.title}»
+                </h3>
+                <p className="mt-0.5 text-xs text-slate-600">
+                  ثبّت ما قرأته بالاختبار أو راجع ملخص الوحدة قبل الانتقال للدرس التالي.
+                </p>
+              </div>
+              {!isDone && (
+                <button
+                  type="button"
+                  onClick={() => onToggleComplete(lesson.id)}
+                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-50"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>تحديد الدرس كمكتمل</span>
+                </button>
+              )}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => onGoToTraining(unit.id, lesson.id)}
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+              >
+                <CheckSquare className="h-4 w-4" />
+                <span>اختبر نفسك في تدريبات هذا الدرس ({relatedQuestions.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onGoToStudyGuide(unit.id)}
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3.5 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-50"
+              >
+                <FileText className="h-4 w-4 text-amber-700" />
+                <span>ملخص ومقارنات الوحدة {unit.unitNumber}</span>
+              </button>
+
+              {relatedLocations.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onGoToAtlas(relatedLocations[0].id)}
+                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3.5 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-50"
+                >
+                  <Compass className="h-4 w-4 text-emerald-700" />
+                  <span>خرائط الدرس في الأطلس ({relatedLocations.length})</span>
+                </button>
+              )}
             </div>
           </section>
 

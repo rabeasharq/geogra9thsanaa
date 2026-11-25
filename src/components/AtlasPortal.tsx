@@ -79,6 +79,10 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
       if (found) {
         setSelectedLocId(found.id);
         setScope(found.scope);
+        setViewMode('2d');
+        setZoom(1);
+        setPan({ x: 0, y: 0 });
+        setActiveLayer((prev) => (prev !== 'all' && found.layer !== prev ? 'all' : prev));
       }
     }
   }, [initialLocationId]);
@@ -123,11 +127,11 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
   const linkedUnit = getUnitById(selectedLocation.unitId);
 
   return (
-    <main className="mx-auto max-w-[1400px] space-y-6 px-4 py-6 sm:px-6">
+    <main className="mx-auto w-full max-w-[1400px] space-y-6 px-3 py-5 sm:px-6 sm:py-6">
       {/* Atlas Control Toolbar */}
-      <section className="rounded-xl border border-slate-200 bg-white p-5">
+      <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <h1 className="font-display text-xl font-extrabold text-slate-900 sm:text-2xl">
               أطلس الرحلة الجغرافية التفاعلي
             </h1>
@@ -136,7 +140,7 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             {onGoToMapLab && (
               <button
                 type="button"
@@ -149,17 +153,17 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
             )}
 
             {/* 2D vs 3D View Toggle */}
-            <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
+            <div className="flex w-full flex-wrap items-center gap-1 rounded-lg bg-slate-100 p-1 sm:w-auto">
               <button
                 type="button"
                 onClick={() => setViewMode('2d')}
-                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors sm:flex-initial ${
                   viewMode === '2d'
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <MapIcon className="h-3.5 w-3.5" />
+                <MapIcon className="h-3.5 w-3.5 shrink-0" />
                 <span>خريطة الطبقات (2D)</span>
               </button>
               <button
@@ -168,13 +172,13 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
                   setViewMode('3d');
                   setThreeDMode(scope === 'yemen' ? 'yemen-relief' : 'arab-world-relief');
                 }}
-                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors sm:flex-initial ${
                   viewMode === '3d'
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Box className="h-3.5 w-3.5" />
+                <Box className="h-3.5 w-3.5 shrink-0" />
                 <span>تصور ثلاثي الأبعاد (3D)</span>
               </button>
             </div>
@@ -185,7 +189,7 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
           {viewMode === '2d' ? (
             <>
-              <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
+              <div className="flex w-full flex-wrap items-center gap-1 rounded-lg bg-slate-100 p-1 sm:w-auto">
                 <button
                   type="button"
                   onClick={() => {
@@ -194,7 +198,7 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
                     const first = ATLAS_LOCATIONS.find((l) => l.scope === 'yemen');
                     if (first) handleSelectLoc(first.id);
                   }}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`flex-1 rounded-md px-3 py-1.5 text-center text-xs font-semibold transition-colors sm:flex-initial ${
                     scope === 'yemen' ? 'bg-emerald-700 text-white' : 'text-slate-700 hover:text-slate-900'
                   }`}
                 >
@@ -208,7 +212,7 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
                     const first = ATLAS_LOCATIONS.find((l) => l.scope === 'arab-world');
                     if (first) handleSelectLoc(first.id);
                   }}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`flex-1 rounded-md px-3 py-1.5 text-center text-xs font-semibold transition-colors sm:flex-initial ${
                     scope === 'arab-world' ? 'bg-sky-700 text-white' : 'text-slate-700 hover:text-slate-900'
                   }`}
                 >
@@ -295,9 +299,9 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
       {/* Main Split: Interactive Map/3D Stage + Location Inspector */}
       <div className="grid items-start gap-6 lg:grid-cols-12">
         {/* Stage */}
-        <div className="space-y-4 lg:col-span-7 xl:col-span-8">
+        <div className="min-w-0 space-y-4 lg:col-span-7 xl:col-span-8">
           {viewMode === '2d' ? (
-            <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-2.5">
+            <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-2 sm:p-2.5">
               {/* Zoom & Pan Floating Toolbar */}
               <div className="no-print absolute top-4 left-4 z-10 flex items-center gap-1 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-sm">
                 <button
@@ -339,7 +343,7 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
 
               {/* Pan-enabled viewport */}
               <div
-                className={`overflow-hidden rounded-lg ${zoom > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                className={`overflow-hidden rounded-lg ${zoom > 1 ? 'cursor-grab touch-none active:cursor-grabbing' : ''}`}
                 onPointerDown={(e) => {
                   if (zoom <= 1) return;
                   dragStartRef.current = {
@@ -430,8 +434,8 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
         </div>
 
         {/* Location Details & Cross-Links */}
-        <aside className="space-y-4 lg:col-span-5 xl:col-span-4">
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <aside className="min-w-0 space-y-4 lg:col-span-5 xl:col-span-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
             <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
               <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
                 <Compass className="h-3.5 w-3.5" />
@@ -466,13 +470,13 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
                 <button
                   type="button"
                   onClick={() => onGoToLesson(linkedUnit.id, linkedLesson.id)}
-                  className="flex w-full items-center justify-between rounded-lg bg-sky-600 px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-sky-700"
+                  className="flex w-full items-center justify-between gap-2 rounded-lg bg-sky-600 px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-sky-700"
                 >
-                  <span className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4" />
-                    <span>فتح الدرس المرتبط: {linkedLesson.title}</span>
+                  <span className="flex min-w-0 items-center gap-2 text-right">
+                    <BookOpen className="h-4 w-4 shrink-0" />
+                    <span className="truncate">فتح الدرس المرتبط: {linkedLesson.title}</span>
                   </span>
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-4 w-4 shrink-0" />
                 </button>
               )}
 
@@ -516,7 +520,7 @@ export const AtlasPortal: React.FC<AtlasPortalProps> = ({
                         : 'text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <span className="flex items-center gap-1.5 truncate">
+                    <span className="flex min-w-0 flex-1 items-center gap-1.5">
                       <MapPin className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{loc.name}</span>
                     </span>
@@ -647,7 +651,7 @@ export const YemenSvgMap: React.FC<{
       viewBox="0 0 1000 600"
       role="img"
       aria-label="خريطة الجمهورية اليمنية التفاعلية متعددة الطبقات"
-      className="h-auto w-full select-none rounded-lg"
+      className="block h-auto w-full select-none overflow-hidden rounded-lg"
     >
       <defs>
         {/* Vibrant Deep-to-Coastal Ocean Bathymetry Gradient */}
@@ -858,6 +862,42 @@ export const YemenSvgMap: React.FC<{
         </text>
       </g>
 
+      {/* Yemen Astronomical & Geographic Location Highlight when loc-yemen-center is selected */}
+      {selectedId === 'loc-yemen-center' && (() => {
+        const sw = projectYemen(12, 41.5);
+        const ne = projectYemen(19, 55);
+        return (
+          <g>
+            <rect
+              x={sw.x}
+              y={ne.y}
+              width={ne.x - sw.x}
+              height={sw.y - ne.y}
+              fill="none"
+              stroke="#be123c"
+              strokeWidth="2.2"
+              strokeDasharray="7 5"
+              opacity="0.85"
+            />
+            <g transform="translate(22, 444)">
+              <rect width="236" height="84" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#be123c" strokeWidth="1.4" />
+              <text x="222" y="21" textAnchor="end" fill="#881337" fontSize="11" fontWeight="800">
+                خريطة الموقع الفلكي والجغرافي لليمن
+              </text>
+              <text x="222" y="42" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+                فلكياً: 12°–19° شمالاً | 41°–55° شرقاً
+              </text>
+              <text x="222" y="60" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+                المساحة: 555 ألف كم² · الساحل &gt; 2200 كم
+              </text>
+              <text x="222" y="76" textAnchor="end" fill="#475569" fontSize="9.5" fontWeight="600">
+                أكثر من 154 جزيرة في البحر الأحمر والعربي
+              </text>
+            </g>
+          </g>
+        );
+      })()}
+
       {/* Non-Overlapping Pins */}
       <SmartPinLayer locations={locations} selectedId={selectedId} onSelect={onSelect} />
     </svg>
@@ -901,7 +941,7 @@ export const ArabWorldSvgMap: React.FC<{
       viewBox="0 0 1000 600"
       role="img"
       aria-label="خريطة الوطن العربي التفاعلية"
-      className="h-auto w-full select-none rounded-lg"
+      className="block h-auto w-full select-none overflow-hidden rounded-lg"
     >
       <defs>
         <linearGradient id="arabOceanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -936,9 +976,9 @@ export const ArabWorldSvgMap: React.FC<{
         return (
           <>
             <line x1="40" y1={eq.y} x2="960" y2={eq.y} stroke="#f0f9ff" strokeDasharray="5 5" strokeWidth="1.2" opacity="0.7" />
-            <text x="52" y={eq.y - 7} fill="#f0f9ff" fontSize="10.5" fontWeight="700">خط الاستواء 0°</text>
+            <text x="145" y={eq.y - 7} fill="#f0f9ff" fontSize="10.5" fontWeight="700">خط الاستواء 0°</text>
             <line x1="40" y1={cancer.y} x2="960" y2={cancer.y} stroke="#fef3c7" strokeDasharray="5 5" strokeWidth="1.2" opacity="0.75" />
-            <text x="52" y={cancer.y - 7} fill="#fef3c7" fontSize="10.5" fontWeight="700">مدار السرطان 23.5°N</text>
+            <text x="175" y={cancer.y - 7} fill="#fef3c7" fontSize="10.5" fontWeight="700">مدار السرطان 23.5°N</text>
           </>
         );
       })()}
@@ -1040,6 +1080,78 @@ export const ArabWorldSvgMap: React.FC<{
         </g>
       )}
 
+      {/* Neighboring Continental Context & Geographic Boundaries (ص 62) */}
+      <path
+        d="M 150,0 L 660,0 L 660,36 L 560,34 L 460,36 L 340,34 L 220,38 L 150,30 Z"
+        fill="#f1f5f9"
+        fillOpacity="0.62"
+        stroke="#cbd5e1"
+        strokeWidth="1"
+      />
+      <text x="415" y="24" textAnchor="middle" fill="#475569" fontSize="11.5" fontWeight="700">
+        قارة أوروبا (عبر البحر المتوسط شمالاً)
+      </text>
+      <text x="720" y="34" textAnchor="middle" fill="#475569" fontSize="10.5" fontWeight="700">
+        جبال طوروس (شمالاً)
+      </text>
+      <text x="868" y="138" textAnchor="middle" fill="#f0f9ff" fontSize="10.5" fontWeight="700">
+        جبال زاجروس والخليج العربي (شرقاً)
+      </text>
+      <text x="430" y="398" textAnchor="middle" fill="#f0f9ff" fontSize="10.5" fontWeight="700">
+        الصحراء الكبرى وأفريقيا (جنوباً)
+      </text>
+
+      {/* Astronomical & Geographic Location Map Overlay when loc-arab-world-center is selected */}
+      {selectedId === 'loc-arab-world-center' && (() => {
+        const nw = projectArabWorld(37.5, -17);
+        const se = projectArabWorld(-2, 60);
+        return (
+          <g>
+            {/* Bounding Astronomical Graticule Frame: 17°W – 60°E | 2°S – 37°30′N */}
+            <rect
+              x={nw.x}
+              y={nw.y}
+              width={se.x - nw.x}
+              height={se.y - nw.y}
+              fill="none"
+              stroke="#be123c"
+              strokeWidth="2.2"
+              strokeDasharray="7 5"
+              opacity="0.88"
+            />
+            <text x={nw.x + 8} y={nw.y + 15} fill="#881337" fontSize="10.5" fontFamily="IBM Plex Mono" fontWeight="800">
+              17°W · 37°30′N
+            </text>
+            <text x={se.x - 8} y={nw.y + 15} textAnchor="end" fill="#881337" fontSize="10.5" fontFamily="IBM Plex Mono" fontWeight="800">
+              60°E
+            </text>
+            <text x={nw.x + 8} y={se.y - 7} fill="#881337" fontSize="10.5" fontFamily="IBM Plex Mono" fontWeight="800">
+              2°S
+            </text>
+
+            {/* Geographic & Astronomical Location Legend Card */}
+            <g transform="translate(36, 444)">
+              <rect width="292" height="106" rx="8" fill="#ffffff" fillOpacity="0.96" stroke="#be123c" strokeWidth="1.5" />
+              <text x="278" y="21" textAnchor="end" fill="#881337" fontSize="11.2" fontWeight="800">
+                خريطة الموقع الفلكي والجغرافي للوطن العربي (ص 61–64)
+              </text>
+              <text x="278" y="42" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+                الفلكي: 60° شرقاً – 17° غرباً | 2° جنوباً – 37°30′ شمالاً
+              </text>
+              <text x="278" y="60" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+                المساحة: 13.3 مليون كم² (22 دولة · 71% أفريقي · 29% آسيوي)
+              </text>
+              <text x="278" y="78" textAnchor="end" fill="#334155" fontSize="9.6" fontWeight="600">
+                شمالاً: المتوسط وطوروس · جنوباً: الهندي والعربي والصحراء الكبرى
+              </text>
+              <text x="278" y="95" textAnchor="end" fill="#334155" fontSize="9.6" fontWeight="600">
+                شرقاً: زاجروس والخليج العربي وعمان · غرباً: المحيط الأطلسي
+              </text>
+            </g>
+          </g>
+        );
+      })()}
+
       {/* Comoros Inset Box */}
       <g transform="translate(795, 442)">
         <rect width="155" height="96" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#0369a1" strokeWidth="1.4" />
@@ -1050,7 +1162,7 @@ export const ArabWorldSvgMap: React.FC<{
 
       {/* Water & Wing Captions */}
       <text x="380" y="72" fill="#f0f9ff" fontSize="14" fontWeight="800">البحر المتوسط</text>
-      <text x="48" y="340" fill="#f0f9ff" fontSize="13" fontWeight="800">المحيط الأطلسي</text>
+      <text x="115" y="340" fill="#f0f9ff" fontSize="13" fontWeight="800">المحيط الأطلسي</text>
       <text x="795" y="352" fill="#f0f9ff" fontSize="13" fontWeight="800">بحر العرب والمحيط الهندي</text>
       <text x="345" y="255" fill="#14532d" fontSize="12.5" fontWeight="700" paintOrder="stroke" stroke="#ffffff" strokeWidth="2.5">
         الجناح الأفريقي (71% مساحة · 61% سكان)

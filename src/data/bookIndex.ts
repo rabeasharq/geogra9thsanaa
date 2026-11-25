@@ -10,7 +10,7 @@ import {
   MINISTERIAL_TOPIC_FREQUENCY,
   ERRATA_LOG
 } from './quizData';
-import { ConceptTerm, Lesson, Unit, AtlasLocation, QuizQuestion } from '../types/textbook';
+import { ConceptTerm, Lesson, Unit, AtlasLocation, QuizQuestion, StudyFocusScope } from '../types/textbook';
 
 export const TEXTBOOK_UNITS: Unit[] = [...UNIT_1_AND_2, ...UNIT_3_AND_4];
 
@@ -47,8 +47,22 @@ export function getAdjacentLessons(lessonId: string): { prev?: Lesson; next?: Le
 export function getLocationsForLesson(lessonId: string): AtlasLocation[] {
   const lesson = getLessonById(lessonId);
   if (!lesson) return [];
-  const idSet = new Set(lesson.atlasLocationIds);
-  return ATLAS_LOCATIONS.filter((loc) => loc.lessonId === lessonId || idSet.has(loc.id));
+  const ordered: AtlasLocation[] = [];
+  const seen = new Set<string>();
+  for (const locId of lesson.atlasLocationIds) {
+    const loc = ATLAS_LOCATIONS.find((l) => l.id === locId);
+    if (loc && !seen.has(loc.id)) {
+      ordered.push(loc);
+      seen.add(loc.id);
+    }
+  }
+  for (const loc of ATLAS_LOCATIONS) {
+    if (loc.lessonId === lessonId && !seen.has(loc.id)) {
+      ordered.push(loc);
+      seen.add(loc.id);
+    }
+  }
+  return ordered;
 }
 
 export function getQuestionsForLesson(lessonId: string): QuizQuestion[] {
@@ -66,10 +80,47 @@ export interface SearchHit {
   pageRef: string;
 }
 
+export function normalizeArabicSearch(text: string): string {
+  return text
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+export function resolveUnitFilterFromStudyFocus(
+  studyFocus: StudyFocusScope | undefined,
+  activeUnitId: string
+): string {
+  if (!studyFocus || studyFocus === 'active-unit') return activeUnitId || 'unit-1';
+  if (studyFocus === 'semester-1') return 'semester-1';
+  if (studyFocus === 'semester-2') return 'semester-2';
+  return 'all';
+}
+
+export function matchesUnitScopeFilter(unitId: string, scopeFilter: string): boolean {
+  if (!scopeFilter || scopeFilter === 'all') return true;
+  if (scopeFilter === 'semester-1') return unitId === 'unit-1' || unitId === 'unit-2';
+  if (scopeFilter === 'semester-2') return unitId === 'unit-3' || unitId === 'unit-4';
+  return unitId === scopeFilter;
+}
+
+export function getStudyScopeLabel(scopeFilter: string): string {
+  if (!scopeFilter || scopeFilter === 'all') return 'كل المنهج (الوحدات 1–4)';
+  if (scopeFilter === 'semester-1') return 'الفصل الأول (اليمن: الوحدتان 1 و2)';
+  if (scopeFilter === 'semester-2') return 'الفصل الثاني (الوطن العربي: الوحدتان 3 و4)';
+  const u = getUnitById(scopeFilter);
+  return u ? `الوحدة ${u.unitNumber}: ${u.title}` : 'كل المنهج';
+}
+
 export function searchBookContent(query: string): SearchHit[] {
-  const q = query.trim();
-  if (!q) return [];
-  const normalized = q.toLowerCase();
+  const normalized = normalizeArabicSearch(query);
+  if (!normalized) return [];
   const hits: SearchHit[] = [];
 
   for (const lesson of ALL_LESSONS) {
@@ -84,7 +135,7 @@ export function searchBookContent(query: string): SearchHit[] {
       ]),
       ...lesson.keyFacts.map((f) => `${f.label} ${f.value}`)
     ].join(' ');
-    if (textBlob.toLowerCase().includes(normalized)) {
+    if (normalizeArabicSearch(textBlob).includes(normalized)) {
       hits.push({
         kind: 'lesson',
         id: lesson.id,
@@ -99,8 +150,8 @@ export function searchBookContent(query: string): SearchHit[] {
 
   for (const concept of ALL_CONCEPTS) {
     if (
-      concept.term.toLowerCase().includes(normalized) ||
-      concept.definition.toLowerCase().includes(normalized)
+      normalizeArabicSearch(concept.term).includes(normalized) ||
+      normalizeArabicSearch(concept.definition).includes(normalized)
     ) {
       hits.push({
         kind: 'concept',
@@ -116,7 +167,7 @@ export function searchBookContent(query: string): SearchHit[] {
 
   for (const loc of ATLAS_LOCATIONS) {
     const locBlob = `${loc.name} ${loc.summary} ${loc.facts.join(' ')}`;
-    if (locBlob.toLowerCase().includes(normalized)) {
+    if (normalizeArabicSearch(locBlob).includes(normalized)) {
       hits.push({
         kind: 'location',
         id: loc.id,
@@ -132,8 +183,8 @@ export function searchBookContent(query: string): SearchHit[] {
 
   for (const question of QUIZ_QUESTIONS) {
     if (
-      question.prompt.toLowerCase().includes(normalized) ||
-      question.explanation.toLowerCase().includes(normalized)
+      normalizeArabicSearch(question.prompt).includes(normalized) ||
+      normalizeArabicSearch(question.explanation).includes(normalized)
     ) {
       hits.push({
         kind: 'question',

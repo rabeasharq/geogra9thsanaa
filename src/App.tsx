@@ -4,11 +4,12 @@
  */
 
 import React, { useState } from 'react';
-import { PortalId, BookmarkItem, AtlasScope } from './types/textbook';
-import { getLessonById, getUnitById, SearchHit } from './data/bookIndex';
+import { PortalId, BookmarkItem, AtlasScope, StudyFocusScope } from './types/textbook';
+import { getLessonById, getLocationsForLesson, getUnitById, SearchHit } from './data/bookIndex';
 import { useStudentProgress } from './hooks/useStudentProgress';
 import { useReadingPreferences } from './hooks/useReadingPreferences';
 import { TopNav } from './components/TopNav';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { BreadcrumbBar } from './components/BreadcrumbBar';
 import { HomePortal } from './components/HomePortal';
 import { UnitsPortal } from './components/UnitsPortal';
@@ -68,6 +69,7 @@ export default function App() {
   const {
     progress,
     updateLastLocation,
+    setStudyFocus,
     setPortal,
     toggleLessonComplete,
     toggleBookmark,
@@ -87,7 +89,11 @@ export default function App() {
   } = useReadingPreferences();
 
   const [searchOpen, setSearchOpen] = useState(false);
-  const [trainingFilter, setTrainingFilter] = useState<{ unitId?: string; lessonId?: string }>({});
+  const [trainingFilter, setTrainingFilter] = useState<{
+    unitId?: string;
+    lessonId?: string;
+    tab?: 'practice' | 'diagnosis' | 'simulator' | 'patterns';
+  }>({});
   const [studyUnitFilter, setStudyUnitFilter] = useState<string | undefined>(undefined);
   const [studyTabFilter, setStudyTabFilter] = useState<StudyTab | undefined>(undefined);
   const [mapLabScope, setMapLabScope] = useState<AtlasScope | undefined>(undefined);
@@ -228,16 +234,29 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const openTraining = (unitId?: string, lessonId?: string) => {
-    setTrainingFilter({ unitId, lessonId });
+  const openTraining = (
+    unitId?: string,
+    lessonId?: string,
+    tab?: 'practice' | 'diagnosis' | 'simulator' | 'patterns'
+  ) => {
+    setTrainingFilter({ unitId, lessonId, tab });
     setPortal('training');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const studyFocus: StudyFocusScope = progress.studyFocus ?? 'active-unit';
 
   const handleSelectPortal = (portal: PortalId) => {
     if (portal === 'audit' && !telemetry.isAdmin) {
       setPortal('home');
       return;
+    }
+    if (portal === 'atlas' && activePortal === 'units' && activeLesson) {
+      const lessonLocs = getLocationsForLesson(activeLesson.id);
+      if (lessonLocs.length > 0) {
+        openAtlasLocation(lessonLocs[0].id);
+        return;
+      }
     }
     if (portal === 'training') {
       setTrainingFilter({});
@@ -285,11 +304,14 @@ export default function App() {
     activePortal === 'units' && activeLesson ? `ص ${activeLesson.pageRange}` : undefined;
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
+    <div className="flex min-h-screen flex-col bg-slate-50 pb-20 text-slate-900 lg:pb-0">
       <TopNav
         activePortal={activePortal}
         onSelectPortal={handleSelectPortal}
         onOpenSearch={() => setSearchOpen(true)}
+        studyFocus={studyFocus}
+        onChangeStudyFocus={setStudyFocus}
+        activeUnitNumber={activeUnit?.unitNumber ?? 1}
         themeMode={themeMode}
         fontScale={fontScale}
         onChangeThemeMode={setThemeMode}
@@ -312,8 +334,13 @@ export default function App() {
           {activePortal === 'home' && (
             <HomePortal
               progress={progress}
+              studyFocus={studyFocus}
+              onChangeStudyFocus={setStudyFocus}
               onNavigatePortal={handleSelectPortal}
               onOpenLesson={openLesson}
+              onOpenAtlasLocation={openAtlasLocation}
+              onOpenStudyGuide={(unitId) => openStudyGuide(unitId)}
+              onOpenTraining={(unitId, lessonId, tab) => openTraining(unitId, lessonId, tab)}
               onOpenSearch={() => setSearchOpen(true)}
             />
           )}
@@ -352,6 +379,8 @@ export default function App() {
             <StudyGuidePortal
               initialUnitId={studyUnitFilter}
               initialTab={studyTabFilter}
+              studyFocus={studyFocus}
+              activeUnitId={progress.lastLocation.unitId}
               telemetry={telemetry}
               bookletScope={bookletScope}
               onChangeBookletScope={setBookletScope}
@@ -365,6 +394,9 @@ export default function App() {
             <TrainingPortal
               initialUnitId={trainingFilter.unitId}
               initialLessonId={trainingFilter.lessonId}
+              initialTab={trainingFilter.tab}
+              studyFocus={studyFocus}
+              activeUnitId={progress.lastLocation.unitId}
               progress={progress}
               onRecordAnswer={recordQuizAnswer}
               onGoToLesson={openLesson}
@@ -543,6 +575,7 @@ export default function App() {
           onClose={() => setOwnerAnalyticsOpen(false)}
         />
       )}
+      <MobileBottomNav activePortal={activePortal} onSelectPortal={handleSelectPortal} />
     </div>
   );
 }

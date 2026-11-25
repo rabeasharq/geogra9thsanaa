@@ -1,29 +1,60 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   SIDE_BY_SIDE_ENTITIES,
   SIDE_BY_SIDE_GROUPS,
   SideBySideEntity
 } from '../data/sideBySideComparisons';
+import { getStudyScopeLabel, matchesUnitScopeFilter } from '../data/bookIndex';
 import { ArrowLeftRight, MapPin, BookOpen } from 'lucide-react';
 
 interface SideBySideComparatorProps {
+  unitFilter?: string;
+  onShowAllUnits?: () => void;
   onGoToLesson: (unitId: string, lessonId: string) => void;
   onGoToAtlas: (locationId: string) => void;
 }
 
 export const SideBySideComparator: React.FC<SideBySideComparatorProps> = ({
+  unitFilter = 'all',
+  onShowAllUnits,
   onGoToLesson,
   onGoToAtlas
 }) => {
-  const [selectedGroupId, setSelectedGroupId] = useState<string>(SIDE_BY_SIDE_GROUPS[0].id);
+  const scopedEntities = useMemo(
+    () => SIDE_BY_SIDE_ENTITIES.filter((e) => matchesUnitScopeFilter(e.unitId, unitFilter)),
+    [unitFilter]
+  );
+
+  const availableGroups = useMemo(() => {
+    return SIDE_BY_SIDE_GROUPS.filter((grp) => {
+      const count = scopedEntities.filter((e) => e.groupId === grp.id).length;
+      return count >= 2;
+    });
+  }, [scopedEntities]);
+
+  const [selectedGroupId, setSelectedGroupId] = useState<string>(
+    () => availableGroups[0]?.id ?? SIDE_BY_SIDE_GROUPS[0].id
+  );
+
+  useEffect(() => {
+    if (availableGroups.length > 0 && !availableGroups.some((g) => g.id === selectedGroupId)) {
+      const nextGroup = availableGroups[0];
+      setSelectedGroupId(nextGroup.id);
+      const nextEntities = scopedEntities.filter((e) => e.groupId === nextGroup.id);
+      setLeftId(nextEntities[0]?.id ?? nextGroup.defaultPair[0]);
+      setRightId(nextEntities[1]?.id ?? nextEntities[0]?.id ?? nextGroup.defaultPair[1]);
+    }
+  }, [availableGroups, selectedGroupId, scopedEntities]);
 
   const groupEntities = useMemo(
-    () => SIDE_BY_SIDE_ENTITIES.filter((e) => e.groupId === selectedGroupId),
-    [selectedGroupId]
+    () => scopedEntities.filter((e) => e.groupId === selectedGroupId),
+    [scopedEntities, selectedGroupId]
   );
 
   const activeGroup =
-    SIDE_BY_SIDE_GROUPS.find((g) => g.id === selectedGroupId) ?? SIDE_BY_SIDE_GROUPS[0];
+    availableGroups.find((g) => g.id === selectedGroupId) ??
+    availableGroups[0] ??
+    SIDE_BY_SIDE_GROUPS[0];
 
   const [leftId, setLeftId] = useState<string>(activeGroup.defaultPair[0]);
   const [rightId, setRightId] = useState<string>(activeGroup.defaultPair[1]);
@@ -31,11 +62,42 @@ export const SideBySideComparator: React.FC<SideBySideComparatorProps> = ({
   const handleGroupSelect = (groupId: string) => {
     setSelectedGroupId(groupId);
     const g = SIDE_BY_SIDE_GROUPS.find((item) => item.id === groupId);
-    if (g) {
+    const entitiesInGroup = scopedEntities.filter((e) => e.groupId === groupId);
+    if (g && entitiesInGroup.some((e) => e.id === g.defaultPair[0]) && entitiesInGroup.some((e) => e.id === g.defaultPair[1])) {
       setLeftId(g.defaultPair[0]);
       setRightId(g.defaultPair[1]);
+    } else if (entitiesInGroup.length >= 2) {
+      setLeftId(entitiesInGroup[0].id);
+      setRightId(entitiesInGroup[1].id);
     }
   };
+
+  if (availableGroups.length === 0 || groupEntities.length === 0) {
+    return (
+      <section
+        aria-label="مقارنة تفاعلية بين عنصرين جنباً إلى جنب"
+        className="no-print flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sky-200 bg-sky-50/50 p-4 sm:p-5 text-xs"
+      >
+        <div>
+          <h2 className="font-display text-sm font-extrabold text-slate-900">
+            المقارنة التفاعلية (عنصر مقابل عنصر)
+          </h2>
+          <p className="mt-1 text-slate-600">
+            في نطاق «{getStudyScopeLabel(unitFilter)}» يمكنك الاعتماد على الجداول المقارنة أدناه، أو فتح المقارنة الشاملة بين حقول اليمن والوطن العربي.
+          </p>
+        </div>
+        {onShowAllUnits && unitFilter !== 'all' && (
+          <button
+            type="button"
+            onClick={onShowAllUnits}
+            className="min-h-[38px] shrink-0 rounded-lg border border-sky-300 bg-white px-3.5 py-2 font-semibold text-sky-900 hover:bg-sky-100"
+          >
+            عرض مقارنات المنهج كاملاً
+          </button>
+        )}
+      </section>
+    );
+  }
 
   const leftEntity: SideBySideEntity =
     groupEntities.find((e) => e.id === leftId) ?? groupEntities[0];
@@ -58,23 +120,36 @@ export const SideBySideComparator: React.FC<SideBySideComparatorProps> = ({
             مقارنة تفاعلية: عنصر مقابل عنصر
           </h2>
           <p className="mt-1 text-xs text-slate-600">
-            اختر مجال المقارنة ثم حدد أي عنصرين متشابهين لعرض المحافظة والدولة والسمات الفارقة جنباً إلى جنب.
+            {unitFilter === 'all'
+              ? 'اختر مجال المقارنة ثم حدد أي عنصرين متشابهين لعرض المحافظة والدولة والسمات الفارقة جنباً إلى جنب.'
+              : `تعرض المقارنات المرتبطة بنطاق «${getStudyScopeLabel(unitFilter)}» فقط حتى لا تتشتت بدروس أخرى.`}
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSwap}
-          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
-        >
-          <ArrowLeftRight className="h-3.5 w-3.5 text-sky-700" />
-          <span>تبديل الطرفين</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {unitFilter !== 'all' && onShowAllUnits && (
+            <button
+              type="button"
+              onClick={onShowAllUnits}
+              className="min-h-[38px] whitespace-nowrap rounded-lg border border-sky-300 bg-white px-3 py-1.5 text-xs font-semibold text-sky-900 hover:bg-sky-100"
+            >
+              عرض كل المنهج
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleSwap}
+            className="inline-flex min-h-[38px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+          >
+            <ArrowLeftRight className="h-3.5 w-3.5 text-sky-700" />
+            <span>تبديل الطرفين</span>
+          </button>
+        </div>
       </div>
 
       {/* Group Selector Buttons */}
       <div className="flex flex-wrap gap-1.5">
-        {SIDE_BY_SIDE_GROUPS.map((grp) => {
+        {availableGroups.map((grp) => {
           const active = grp.id === selectedGroupId;
           return (
             <button

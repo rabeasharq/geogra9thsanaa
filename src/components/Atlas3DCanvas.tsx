@@ -851,6 +851,9 @@ export const Atlas3DCanvas: React.FC<Atlas3DCanvasProps> = ({
       requestRender();
     };
     window.addEventListener('resize', onResize);
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => onResize()) : null;
+    resizeObserver?.observe(container);
 
     // Initial synchronous render
     renderer.render(scene, camera);
@@ -861,6 +864,7 @@ export const Atlas3DCanvas: React.FC<Atlas3DCanvasProps> = ({
       controlsApiRef.current = null;
       cancelAnimationFrame(frameId);
       window.removeEventListener('resize', onResize);
+      resizeObserver?.disconnect();
       controls.removeEventListener('change', requestRender);
       renderer?.domElement.removeEventListener('pointermove', onPointerMove);
       renderer?.domElement.removeEventListener('click', onClick);
@@ -883,7 +887,7 @@ export const Atlas3DCanvas: React.FC<Atlas3DCanvasProps> = ({
   }
 
   return (
-    <div className="relative h-[450px] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-900">
+    <div className="relative h-[320px] w-full max-w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-900 sm:h-[450px]">
       <div ref={mountRef} className="h-full w-full" />
 
       {/* Projected crisp Arabic callout for ONLY the currently selected pin */}
@@ -897,7 +901,7 @@ export const Atlas3DCanvas: React.FC<Atlas3DCanvasProps> = ({
       )}
 
       {/* Top instruction / hover readout */}
-      <div className="pointer-events-none absolute top-3 right-3 rounded-lg bg-slate-900/90 px-3 py-1.5 text-xs text-white">
+      <div className="pointer-events-none absolute top-2.5 right-2.5 left-2.5 rounded-lg bg-slate-900/90 px-2.5 py-1.5 text-[11px] text-white sm:top-3 sm:right-3 sm:left-auto sm:px-3 sm:text-xs">
         {hoveredInfo
           ? hoveredInfo.name
           : mode === 'yemen-relief'
@@ -911,7 +915,7 @@ export const Atlas3DCanvas: React.FC<Atlas3DCanvasProps> = ({
 
       {/* Elevation legend for terrain modes */}
       {(mode === 'yemen-relief' || mode === 'arab-world-relief') && (
-        <div className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-2 rounded-lg bg-slate-900/85 px-2.5 py-1 text-[10px] text-white">
+        <div className="pointer-events-none absolute right-2.5 bottom-14 flex max-w-[calc(100%-1.25rem)] flex-wrap items-center gap-2 rounded-lg bg-slate-900/85 px-2.5 py-1 text-[10px] text-white sm:right-3 sm:bottom-3">
           <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-sky-400" />بحر/أودية</span>
           <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-400" />سهول 0–200م</span>
           <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-300" />هضاب</span>
@@ -990,7 +994,7 @@ const FallbackRelief3D: React.FC<{
       .join(' ') + ' Z';
 
   return (
-    <div className="relative h-[450px] w-full overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-b from-sky-950 to-slate-900 text-white">
+    <div className="relative h-[320px] w-full max-w-full overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-b from-sky-950 to-slate-900 text-white sm:h-[450px]">
       <div className="absolute top-3 right-3 z-10 rounded-lg bg-slate-900/90 px-3 py-1.5 text-xs">
         عرض تضاريسي مجسم (الوضع الخفيف أوفلاين)
       </div>

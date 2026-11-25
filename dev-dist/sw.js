@@ -78,11 +78,12 @@ define(['./workbox-afac4cd2'], (function (workbox) { 'use strict';
    */
   workbox.precacheAndRoute([{
     "url": "/index.html",
-    "revision": "0.plr0a9ttet"
+    "revision": "0.6acua2jec"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/index.html"), {
-    allowlist: [/^\/$/]
+    allowlist: [/^\/$/],
+    denylist: [/^\/__\/auth/, /^\/__\//]
   }));
   workbox.registerRoute(/\/src\/assets\/.*/i, new workbox.CacheFirst({
     "cacheName": "local-textbook-images",

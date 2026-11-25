@@ -109,7 +109,7 @@ export const UNIT_3_AND_4: Unit[] = [
             unitId: 'unit-3',
             lessonId: 'u3-l1',
             pageRef: 'ص 61',
-            relatedLocationIds: ['loc-hormuz', 'loc-suez-canal', 'loc-gibraltar', 'loc-bab-el-mandeb']
+            relatedLocationIds: ['loc-arab-world-center', 'loc-arab-mandeb', 'loc-hormuz', 'loc-suez-canal', 'loc-gibraltar']
           }
         ],
         activities: [
@@ -135,7 +135,7 @@ export const UNIT_3_AND_4: Unit[] = [
         evaluationPrompts: [
           'س1–س6: أسئلة شاملة حول التعريف، الموقع الفلكي والحدود، المضائق الأربعة، المساحة، والأهمية.'
         ],
-        atlasLocationIds: ['loc-bab-el-mandeb', 'loc-hormuz', 'loc-suez-canal', 'loc-gibraltar', 'loc-comoros']
+        atlasLocationIds: ['loc-arab-world-center', 'loc-arab-mandeb', 'loc-hormuz', 'loc-suez-canal', 'loc-gibraltar', 'loc-comoros']
       },
       {
         id: 'u3-l2',
@@ -325,7 +325,7 @@ export const UNIT_3_AND_4: Unit[] = [
         evaluationPrompts: [
           'س1–س4: العوامل المؤثرة في المناخ، تصنيف 8 عبارات على الأقاليم، توصيل المشكلة بالحل، ورسم الخريطة.'
         ],
-        atlasLocationIds: ['loc-atlas-mountains', 'loc-nabi-shuayb', 'loc-comoros']
+        atlasLocationIds: ['loc-sudan-savanna', 'loc-comoros', 'loc-atlas-mountains', 'loc-nabi-shuayb']
       },
       {
         id: 'u3-l4',
@@ -825,7 +825,7 @@ export const UNIT_3_AND_4: Unit[] = [
         evaluationPrompts: [
           'س1–س5: أسئلة حول عوامل الصناعة، أهميتها، مشكلاتها، خامات المعادن، وأهمية النفط والغاز.'
         ],
-        atlasLocationIds: ['loc-marib-safer', 'loc-arabian-gulf-oil', 'loc-morocco-phosphate']
+        atlasLocationIds: ['loc-arabian-gulf-oil', 'loc-morocco-phosphate', 'loc-mauritania-iron', 'loc-marib-safer']
       },
       {
         id: 'u4-l4',
@@ -919,7 +919,7 @@ export const UNIT_3_AND_4: Unit[] = [
         evaluationPrompts: [
           'س1–س6: أسئلة في تعريف التجارة والنقل، مقومات التجارة، وسائل النقل، وأهمية الممرات البحرية.'
         ],
-        atlasLocationIds: ['loc-suez-canal', 'loc-bab-el-mandeb', 'loc-aden-port', 'loc-hormuz']
+        atlasLocationIds: ['loc-suez-canal', 'loc-arab-mandeb', 'loc-hormuz', 'loc-aden-port']
       },
       {
         id: 'u4-l5',

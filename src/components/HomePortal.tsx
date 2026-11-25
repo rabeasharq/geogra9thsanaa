@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ALL_LESSONS,
   ATLAS_LOCATIONS,
@@ -6,9 +6,11 @@ import {
   QUIZ_QUESTIONS,
   TEXTBOOK_UNITS,
   getLessonById,
+  getLocationsForLesson,
   getUnitById
 } from '../data/bookIndex';
-import { PortalId, StudentProgress } from '../types/textbook';
+import { PortalId, StudentProgress, StudyFocusScope } from '../types/textbook';
+import { diagnoseStudentProgress } from '../utils/studentDiagnosis';
 import {
   BookOpen,
   Compass,
@@ -18,25 +20,38 @@ import {
   Bookmark,
   Search,
   PenTool,
-  Phone
+  Phone,
+  Target,
+  SlidersHorizontal
 } from 'lucide-react';
 import { PWAOfflineStatusCard } from './PWAInstallButton';
 
 interface HomePortalProps {
   progress: StudentProgress;
+  studyFocus: StudyFocusScope;
+  onChangeStudyFocus: (scope: StudyFocusScope) => void;
   onNavigatePortal: (portal: PortalId) => void;
   onOpenLesson: (unitId: string, lessonId: string) => void;
+  onOpenAtlasLocation: (locationId: string) => void;
+  onOpenStudyGuide: (unitId?: string) => void;
+  onOpenTraining: (unitId?: string, lessonId?: string, initialTab?: 'practice' | 'diagnosis' | 'simulator' | 'patterns') => void;
   onOpenSearch: () => void;
 }
 
 export const HomePortal: React.FC<HomePortalProps> = ({
   progress,
+  studyFocus,
+  onChangeStudyFocus,
   onNavigatePortal,
   onOpenLesson,
+  onOpenAtlasLocation,
+  onOpenStudyGuide,
+  onOpenTraining,
   onOpenSearch
 }) => {
   const lastLesson = getLessonById(progress.lastLocation.lessonId) ?? ALL_LESSONS[0];
   const lastUnit = getUnitById(progress.lastLocation.unitId) ?? TEXTBOOK_UNITS[0];
+  const lessonLocations = useMemo(() => getLocationsForLesson(lastLesson.id), [lastLesson.id]);
 
   const completedCount = progress.completedLessons.length;
   const totalLessons = ALL_LESSONS.length;
@@ -44,6 +59,34 @@ export const HomePortal: React.FC<HomePortalProps> = ({
 
   const answeredCount = Object.keys(progress.quizAnswers).length;
   const correctCount = Object.values(progress.quizAnswers).filter((a) => a.isCorrect).length;
+  const isFirstTimeStudent = completedCount === 0 && answeredCount === 0;
+
+  const diagnosis = useMemo(() => diagnoseStudentProgress(progress), [progress]);
+
+  const scopeOptions: { id: StudyFocusScope; label: string; hint: string }[] = [
+    {
+      id: 'active-unit',
+      label: `الوحدة الحالية (الوحدة ${lastUnit.unitNumber})`,
+      hint: `تركّز الملزمة والمقارنات والتدريبات على «${lastUnit.title}» فقط`
+    },
+    {
+      id: 'semester-1',
+      label: 'الفصل الأول (اليمن 1–2)',
+      hint: 'تركيز على الوحدتين الأولى والثانية'
+    },
+    {
+      id: 'semester-2',
+      label: 'الفصل الثاني (الوطن العربي 3–4)',
+      hint: 'تركيز على الوحدتين الثالثة والرابعة'
+    },
+    {
+      id: 'all',
+      label: 'كل المنهج (المراجعة الشاملة)',
+      hint: 'عرض جميع الوحدات والمقارنات والاختبار الوزاري الكامل'
+    }
+  ];
+
+  const activeScopeHint = scopeOptions.find((s) => s.id === studyFocus)?.hint ?? '';
 
   const portals: {
     id: PortalId;
@@ -53,6 +96,7 @@ export const HomePortal: React.FC<HomePortalProps> = ({
     description: string;
     icon: React.ReactNode;
     accentClass: string;
+    recommendedStart?: boolean;
   }[] = [
     {
       id: 'units',
@@ -60,9 +104,10 @@ export const HomePortal: React.FC<HomePortalProps> = ({
       title: 'مدخل الوحدات والدروس',
       subtitle: '4 وحدات · 18 درساً مرتباً حسب الكتاب',
       description:
-        'استعرض نص الكتاب الرسمي كاملاً مع الأهداف والمفاهيم والخرائط والجداول والتقويم، وإثراءً اختيارياً مطوياً أو عائماً عند الضغط على الكلمة مع حفظ تقدمك.',
+        'نقطة البداية الأولى: اقرأ نص الكتاب الرسمي كاملاً مع الأهداف والمفاهيم والجداول والتقويم، وإثراءً اختيارياً عند الضغط على الكلمة.',
       icon: <BookOpen className="h-5 w-5 text-sky-700" />,
-      accentClass: 'hover:border-sky-300'
+      accentClass: 'hover:border-sky-300',
+      recommendedStart: true
     },
     {
       id: 'atlas',
@@ -70,44 +115,44 @@ export const HomePortal: React.FC<HomePortalProps> = ({
       title: 'أطلس الرحلة الجغرافية',
       subtitle: `${ATLAS_LOCATIONS.length} موقعاً موثقاً · ثنائي وثلاثي الأبعاد`,
       description:
-        'رحلة بصرية متدرجة عبر خرائط الطبقات التفاعلية لليمن والوطن العربي مع تصور ثلاثي الأبعاد للكرة الأرضية والتضاريس والجبال.',
+        'شاهد مواقع الدرس التي قرأتها على خرائط الطبقات التفاعلية لليمن والوطن العربي مع تصور ثلاثي الأبعاد للارتفاعات.',
       icon: <Compass className="h-5 w-5 text-emerald-700" />,
       accentClass: 'hover:border-emerald-300'
     },
     {
-      id: 'study-guide',
+      id: 'map-lab',
       num: '03',
-      title: 'الملزمة الشاملة',
-      subtitle: 'تلخيص كامل · جداول · قوانين · تصدير PDF',
+      title: 'قسم رسم الخرائط وكتابة البيانات',
+      subtitle: '6 خرائط تفصيلية مطابقة للكتاب · مرسم حر · تعيين صماء',
       description:
-        'تنظيم تعليمي شامل يستوعب كل تفاصيل الكتاب وجداوله ومصطلحاته وخرائطه الذهنية مع إحالات دقيقة للصفحات وإمكانية الطباعة.',
+        'تدرّب عملياً على رسم الخرائط الصماء خطوة بخطوة وكتابة البيانات عليها، وتحديد المواقع المطلوبة في الامتحان.',
+      icon: <PenTool className="h-5 w-5 text-rose-700" />,
+      accentClass: 'hover:border-rose-300'
+    },
+    {
+      id: 'study-guide',
+      num: '04',
+      title: 'الملزمة والمقارنات',
+      subtitle: 'تلخيص · مقارنات متكيفة مع نطاقك · طباعة PDF',
+      description:
+        'راجع خلاصة وحدتك الحالية وجداولها وقوانينها ومختبر التمييز بين المتشابهات دون تشتت بدروس لم تصلها بعد.',
       icon: <FileText className="h-5 w-5 text-amber-700" />,
       accentClass: 'hover:border-amber-300'
     },
     {
       id: 'training',
-      num: '04',
-      title: 'التدريب والتقويم',
-      subtitle: `${QUIZ_QUESTIONS.length} سؤالاً مصنفاً + تحليل الأنماط`,
+      num: '05',
+      title: 'التدريب والتقويم الوزاري',
+      subtitle: `${QUIZ_QUESTIONS.length} سؤالاً · خطة مراجعة الأخطاء · محاكي الامتحان`,
       description:
-        'تدريبات تفاعلية مصنفة حسب الدرس ومستوى التفكير ونوع السؤال، مرتبطة بالإجابات المقررة والمواقع على الأطلس.',
+        'اختبر فهمك في الدرس أو الوحدة الحالية، واكتشف أخطاءك مع توجيه مباشر للدرس المناسب، أو خُض محاكي الامتحان.',
       icon: <CheckSquare className="h-5 w-5 text-indigo-700" />,
       accentClass: 'hover:border-indigo-300'
-    },
-    {
-      id: 'map-lab',
-      num: '05',
-      title: 'قسم تعلم رسم الخرائط وكتابة البيانات',
-      subtitle: '6 خرائط تفصيلية مطابقة للكتاب · مرسم حر وكتابة · تعيين صماء',
-      description:
-        'قسم مستقل يطابق خرائط الكتاب المدرسي لتعلم رسم الخرائط الصماء خطوة بخطوة، وكتابة البيانات عليها، وحفظ الرسم أو التدرب على تحديد المواقع.',
-      icon: <PenTool className="h-5 w-5 text-rose-700" />,
-      accentClass: 'hover:border-rose-300'
     }
   ];
 
   return (
-    <main className="mx-auto max-w-[1400px] space-y-10 px-4 py-8 sm:px-6 sm:py-10">
+    <main className="mx-auto max-w-[1400px] space-y-8 px-4 py-6 sm:px-6 sm:py-8">
       {/* Hero Split Section */}
       <section className="grid items-stretch gap-6 lg:grid-cols-12">
         <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 lg:col-span-7">
@@ -120,18 +165,20 @@ export const HomePortal: React.FC<HomePortalProps> = ({
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600">
               منظومة تعليمية مترابطة لكتاب «{BOOK_FRONT_MATTER.officialTitle}» تحافظ على النص الرسمي والأرقام
-              والخرائط المقررة دون حذف أو إضافة خارجية، وتربط كل معلومة بالأطلس التفاعلي والملزمة الشاملة والتقويم.
+              والخرائط المقررة دون حذف أو إضافة خارجية، وترشدك خطوة بخطوة من الدرس إلى الأطلس فالتدريب.
             </p>
           </div>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <div className="mt-7 flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => onOpenLesson(lastUnit.id, lastLesson.id)}
-              className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-sky-700"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-sky-700"
             >
               <span>
-                {completedCount > 0 ? 'متابعة من آخر موضع:' : 'ابدأ القراءة:'} {lastLesson.title}
+                {isFirstTimeStudent
+                  ? `ابدأ من الوحدة ${lastUnit.unitNumber} – الدرس ${lastLesson.lessonNumber}: ${lastLesson.title}`
+                  : `واصل مذاكرة الدرس ${lastLesson.lessonNumber}: ${lastLesson.title}`}
               </span>
               <ArrowLeft className="h-4 w-4" />
             </button>
@@ -139,7 +186,7 @@ export const HomePortal: React.FC<HomePortalProps> = ({
             <button
               type="button"
               onClick={onOpenSearch}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
               <Search className="h-4 w-4 text-slate-500" />
               <span>ابحث في الكتاب</span>
@@ -147,7 +194,7 @@ export const HomePortal: React.FC<HomePortalProps> = ({
           </div>
         </div>
 
-        <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 lg:col-span-5">
+        <div className="relative min-h-[240px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 lg:col-span-5">
           <img
             src="/src/assets/images/yemen_highlands_terraces_1795370729559.jpg"
             alt="المدرجات الزراعية في المرتفعات الغربية بالجمهورية اليمنية"
@@ -163,6 +210,163 @@ export const HomePortal: React.FC<HomePortalProps> = ({
           </div>
         </div>
       </section>
+
+      {/* Study Focus Scope Selector + 4-Step Student Journey */}
+      <section
+        aria-label="تحديد نطاق المذاكرة ومسار البداية"
+        className="space-y-5 rounded-2xl border border-sky-200/80 bg-white p-5 sm:p-6"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-bold text-sky-800">
+              <SlidersHorizontal className="h-4 w-4" />
+              <span>نطاق المذاكرة الحالي (حتى لا تتشتت بدروس لم تصلها بعد)</span>
+            </div>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">
+              {activeScopeHint} — ويمكنك التبديل إلى المراجعة الشاملة في أي وقت.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="نطاق المذاكرة الحالي">
+            {scopeOptions.map((opt) => {
+              const active = studyFocus === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => onChangeStudyFocus(opt.id)}
+                  className={`min-h-[38px] whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    active
+                      ? 'border-sky-600 bg-sky-600 text-white'
+                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 4-Step Clear Learning Sequence */}
+        <div>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-display text-sm font-extrabold text-slate-900">
+              من أين تبدأ؟ خطوات المذاكرة المرتبة للدرس الحالي ({lastLesson.title})
+            </h2>
+            <span className="text-xs text-slate-500">
+              الوحدة {lastUnit.unitNumber} · ص {lastLesson.pageRange}
+            </span>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <button
+              type="button"
+              onClick={() => onOpenLesson(lastUnit.id, lastLesson.id)}
+              className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50/60 p-3.5 text-right transition-colors hover:bg-sky-50"
+            >
+              <span className="font-mono text-sm font-extrabold text-sky-700">01</span>
+              <div>
+                <div className="text-xs font-bold text-slate-900">اقرأ الدرس الرسمي</div>
+                <div className="mt-0.5 text-[11px] text-slate-600">افهم النص والأرقام والمصطلحات</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (lessonLocations[0]) {
+                  onOpenAtlasLocation(lessonLocations[0].id);
+                } else {
+                  onNavigatePortal('atlas');
+                }
+              }}
+              className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 text-right transition-colors hover:border-emerald-300 hover:bg-emerald-50/40"
+            >
+              <span className="font-mono text-sm font-extrabold text-emerald-700">02</span>
+              <div>
+                <div className="text-xs font-bold text-slate-900">شاهده في الأطلس</div>
+                <div className="mt-0.5 text-[11px] text-slate-600">
+                  {lessonLocations.length > 0
+                    ? `تثبيت ${lessonLocations.length} مواقع لهذا الدرس على الخريطة`
+                    : 'استعرض خريطة الدرس والمواقع'}
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onOpenStudyGuide(lastUnit.id)}
+              className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 text-right transition-colors hover:border-amber-300 hover:bg-amber-50/40"
+            >
+              <span className="font-mono text-sm font-extrabold text-amber-700">03</span>
+              <div>
+                <div className="text-xs font-bold text-slate-900">راجع الملخص والمقارنة</div>
+                <div className="mt-0.5 text-[11px] text-slate-600">
+                  ملخص الوحدة {lastUnit.unitNumber} فقط دون دروس لاحقة
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onOpenTraining(lastUnit.id, lastLesson.id, 'practice')}
+              className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 text-right transition-colors hover:border-indigo-300 hover:bg-indigo-50/40"
+            >
+              <span className="font-mono text-sm font-extrabold text-indigo-700">04</span>
+              <div>
+                <div className="text-xs font-bold text-slate-900">اختبر نفسك في الدرس</div>
+                <div className="mt-0.5 text-[11px] text-slate-600">تحقق من إجاباتك وصحح الأخطاء فوراً</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Conditional Smart Mistake Alert Banner */}
+      {diagnosis.totalWrong > 0 && diagnosis.lessonsNeedingReview.length > 0 && (
+        <section
+          aria-label="تنبيه مراجعة الأخطاء"
+          className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-rose-200 bg-rose-50/70 px-5 py-4"
+        >
+          <div className="flex items-start gap-3">
+            <Target className="mt-0.5 h-5 w-5 shrink-0 text-rose-700" />
+            <div className="text-xs leading-relaxed text-slate-800">
+              <div className="font-bold text-rose-950">
+                توجيه مراجعة من إجاباتك ({diagnosis.totalWrong}{' '}
+                {diagnosis.totalWrong === 1 ? 'خطأ' : 'أخطاء'} في {diagnosis.lessonsNeedingReview.length}{' '}
+                {diagnosis.lessonsNeedingReview.length === 1 ? 'درس' : 'دروس'})
+              </div>
+              <p className="mt-0.5">
+                أهم درس يحتاج مراجعة الآن: <strong>{diagnosis.lessonsNeedingReview[0].lesson.title}</strong> (ص{' '}
+                {diagnosis.lessonsNeedingReview[0].lesson.pageRange})
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onOpenTraining(undefined, undefined, 'diagnosis')}
+              className="min-h-[38px] rounded-lg bg-rose-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-rose-800"
+            >
+              عرض خطة المراجعة وأخطائي
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onOpenLesson(
+                  diagnosis.lessonsNeedingReview[0].unit.id,
+                  diagnosis.lessonsNeedingReview[0].lesson.id
+                )
+              }
+              className="min-h-[38px] rounded-lg border border-rose-300 bg-white px-3.5 py-2 text-xs font-semibold text-rose-900 hover:bg-rose-50"
+            >
+              الانتقال للدرس
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Progress & Scope KPI Strip */}
       <section
@@ -214,15 +418,15 @@ export const HomePortal: React.FC<HomePortalProps> = ({
       {/* Installable PWA & Full Offline Readiness Banner */}
       <PWAOfflineStatusCard />
 
-      {/* Four Main Portals */}
+      {/* Sequential Portals */}
       <section aria-labelledby="portals-heading">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
           <div>
             <h2 id="portals-heading" className="font-display text-xl font-bold text-slate-900 sm:text-2xl">
-              المداخل التفاعلية للكتاب
+              أقسام الكتاب بالترتيب الدراسي
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              جميع المداخل مترابطة بقاعدة محتوى واحدة؛ اختر المدخل المناسب لهدفك الدراسي.
+              جميع الأقسام مترابطة بقاعدة محتوى واحدة؛ ننصحك بالبدء من (01) مدخل الوحدات والدروس.
             </p>
           </div>
         </div>
@@ -233,7 +437,11 @@ export const HomePortal: React.FC<HomePortalProps> = ({
               key={portal.id}
               type="button"
               onClick={() => onNavigatePortal(portal.id)}
-              className={`group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 text-right transition-all hover:shadow-sm ${portal.accentClass}`}
+              className={`group flex flex-col justify-between rounded-xl border bg-white p-6 text-right transition-all hover:shadow-sm ${
+                portal.recommendedStart && isFirstTimeStudent
+                  ? 'border-sky-400 ring-1 ring-sky-200'
+                  : 'border-slate-200'
+              } ${portal.accentClass}`}
             >
               <div>
                 <div className="flex items-center justify-between gap-4">
@@ -242,6 +450,7 @@ export const HomePortal: React.FC<HomePortalProps> = ({
                   </span>
                   <span className="font-mono text-xs font-semibold tabular-nums text-slate-400">
                     {portal.num}
+                    {portal.recommendedStart && isFirstTimeStudent ? ' · ابدأ هنا' : ''}
                   </span>
                 </div>
                 <h3 className="font-display mt-4 text-lg font-bold text-slate-900 group-hover:text-sky-700">
@@ -251,7 +460,7 @@ export const HomePortal: React.FC<HomePortalProps> = ({
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">{portal.description}</p>
               </div>
               <div className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-sky-700">
-                <span>الدخول إلى المدخل</span>
+                <span>الدخول إلى القسم</span>
                 <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
               </div>
             </button>
@@ -275,16 +484,20 @@ export const HomePortal: React.FC<HomePortalProps> = ({
             const unitCompleted = unit.lessons.filter((l) =>
               progress.completedLessons.includes(l.id)
             ).length;
+            const isCurrentUnit = unit.id === lastUnit.id;
             return (
               <div
                 key={unit.id}
-                className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5"
+                className={`flex flex-col justify-between rounded-xl border bg-white p-5 ${
+                  isCurrentUnit ? 'border-sky-300' : 'border-slate-200'
+                }`}
               >
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                     <span>
                       الفصل الدراسي {unit.semester === 1 ? 'الأول (اليمن)' : 'الثاني (الوطن العربي)'} · ص{' '}
                       <span className="font-mono tabular-nums">{unit.pageRange}</span>
+                      {isCurrentUnit ? ' · وحدتك الحالية' : ''}
                     </span>
                     <span className="font-mono tabular-nums font-medium text-slate-700">
                       مكتمل {unitCompleted}/{unit.lessons.length}
@@ -297,6 +510,7 @@ export const HomePortal: React.FC<HomePortalProps> = ({
                   <ul className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
                     {unit.lessons.map((lesson) => {
                       const done = progress.completedLessons.includes(lesson.id);
+                      const isCurrentLesson = lesson.id === lastLesson.id;
                       return (
                         <li key={lesson.id}>
                           <button
@@ -308,8 +522,13 @@ export const HomePortal: React.FC<HomePortalProps> = ({
                               <span className="font-mono text-xs tabular-nums text-slate-400">
                                 {lesson.lessonNumber}.
                               </span>
-                              <span>{lesson.title}</span>
+                              <span className={isCurrentLesson ? 'font-bold text-sky-800' : ''}>
+                                {lesson.title}
+                              </span>
                               {done && <span className="text-xs text-emerald-700">· مكتمل</span>}
+                              {!done && isCurrentLesson && (
+                                <span className="text-xs text-sky-700">· موضعك الحالي</span>
+                              )}
                             </span>
                             <span className="font-mono shrink-0 text-xs tabular-nums text-slate-400">
                               ص {lesson.pageRange}

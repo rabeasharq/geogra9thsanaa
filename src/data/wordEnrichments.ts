@@ -169,7 +169,7 @@ export const WORD_ENRICHMENTS: WordEnrichmentEntry[] = [
     externalEnrichment:
       'يمتد الوطن العربي في كتلة جغرافية متصلة بين قارتي آسيا وأفريقيا (بالإضافة إلى جزر القمر)، ويتحكم بممرات التجارة البحرية بين المحيطين الأطلسي والهندي والبحر المتوسط.',
     whyItMatters: 'يُظهر موقع اليمن بوصفها البوابة الجنوبية لهذا الامتداد العربي الواحد.',
-    atlasLocationId: 'loc-arab-mandeb'
+    atlasLocationId: 'loc-arab-world-center'
   },
   {
     id: 'enrich-hormuz',

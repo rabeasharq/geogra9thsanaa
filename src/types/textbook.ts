@@ -198,6 +198,8 @@ export interface BookmarkItem {
   createdAt: number;
 }
 
+export type StudyFocusScope = 'active-unit' | 'semester-1' | 'semester-2' | 'all';
+
 export interface StudentProgress {
   lastLocation: {
     portal: PortalId;
@@ -206,6 +208,7 @@ export interface StudentProgress {
     atlasLocationId?: string;
     studyTab?: string;
   };
+  studyFocus?: StudyFocusScope;
   completedLessons: string[];
   bookmarks: BookmarkItem[];
   quizAnswers: Record<

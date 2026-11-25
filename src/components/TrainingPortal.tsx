@@ -8,8 +8,11 @@ import {
   QUIZ_QUESTIONS,
   TEXTBOOK_UNITS,
   getLessonById,
+  getStudyScopeLabel,
   getUnitById,
-  projectYemen
+  matchesUnitScopeFilter,
+  projectYemen,
+  resolveUnitFilterFromStudyFocus
 } from '../data/bookIndex';
 import {
   CognitiveLevel,
@@ -17,7 +20,8 @@ import {
   QuestionType,
   QuizMapVisual,
   QuizQuestion,
-  StudentProgress
+  StudentProgress,
+  StudyFocusScope
 } from '../types/textbook';
 import {
   CheckCircle2,
@@ -34,14 +38,22 @@ import {
   Shuffle,
   MapPin,
   Target,
-  AlertTriangle
+  AlertTriangle,
+  ChevronRight,
+  ChevronLeft,
+  SlidersHorizontal
 } from 'lucide-react';
 import { StudentDiagnosisPanel } from './StudentDiagnosisPanel';
 import { diagnoseAnswers, diagnoseStudentProgress } from '../utils/studentDiagnosis';
 
+type TrainingTab = 'practice' | 'diagnosis' | 'simulator' | 'patterns';
+
 interface TrainingPortalProps {
   initialUnitId?: string;
   initialLessonId?: string;
+  initialTab?: TrainingTab;
+  studyFocus?: StudyFocusScope;
+  activeUnitId?: string;
   progress: StudentProgress;
   onRecordAnswer: (questionId: string, selected: string, isCorrect: boolean) => void;
   onGoToLesson: (unitId: string, lessonId: string) => void;
@@ -103,54 +115,108 @@ function pickRandomSlice<T>(items: T[], count: number): T[] {
   return arr.slice(0, count);
 }
 
-function buildSimulatedMinisterialPaper(poolSource: 'mixed' | 'ministerial-only'): QuizQuestion[] {
-  const pool =
+const PAGE_SIZE = 15;
+
+function buildSimulatedMinisterialPaper(
+  poolSource: 'mixed' | 'ministerial-only',
+  simScope: 'full' | 'study-scope',
+  unitScopeFilter: string
+): QuizQuestion[] {
+  const basePool =
     poolSource === 'ministerial-only'
       ? MINISTERIAL_QUESTIONS
-      : [...MINISTERIAL_QUESTIONS, ...GENERATED_QUESTIONS];
+      : [...MINISTERIAL_QUESTIONS, ...GENERATED_QUESTIONS, ...CORE_TEXTBOOK_QUESTIONS];
 
-  const tfPool = pool.filter((q) => q.type === 'true_false');
-  const mcqPool = pool.filter((q) => q.type === 'mcq' || q.type === 'fill_blank');
-  const mapPool = pool.filter((q) => q.type === 'map_identify');
+  if (simScope === 'full' || unitScopeFilter === 'all') {
+    const fullPool =
+      poolSource === 'ministerial-only'
+        ? MINISTERIAL_QUESTIONS
+        : [...MINISTERIAL_QUESTIONS, ...GENERATED_QUESTIONS];
+    const tfPool = fullPool.filter((q) => q.type === 'true_false');
+    const mcqPool = fullPool.filter((q) => q.type === 'mcq' || q.type === 'fill_blank');
+    const mapPool = fullPool.filter((q) => q.type === 'map_identify');
 
-  return [
-    ...pickRandomSlice(tfPool, 8),
-    ...pickRandomSlice(mcqPool, 9),
-    ...pickRandomSlice(mapPool, 2)
+    return [
+      ...pickRandomSlice(tfPool, 8),
+      ...pickRandomSlice(mcqPool, 9),
+      ...pickRandomSlice(mapPool, 2)
+    ];
+  }
+
+  const scopedPool = basePool.filter((q) => matchesUnitScopeFilter(q.unitId, unitScopeFilter));
+  const tfPool = scopedPool.filter((q) => q.type === 'true_false');
+  const mcqPool = scopedPool.filter((q) => q.type === 'mcq' || q.type === 'fill_blank');
+  const mapPool = scopedPool.filter((q) => q.type === 'map_identify');
+
+  const picked = [
+    ...pickRandomSlice(tfPool, 5),
+    ...pickRandomSlice(mcqPool, 6),
+    ...pickRandomSlice(mapPool, 1)
   ];
+
+  if (picked.length > 0) return picked;
+  return pickRandomSlice(
+    scopedPool.filter((q) => q.type !== 'guided_essay' && q.type !== 'matching'),
+    10
+  );
 }
 
 export const TrainingPortal: React.FC<TrainingPortalProps> = ({
   initialUnitId,
   initialLessonId,
+  initialTab,
+  studyFocus = 'active-unit',
+  activeUnitId = 'unit-1',
   progress,
   onRecordAnswer,
   onGoToLesson,
   onGoToAtlas,
   onGoToComparisons
 }) => {
-  const [activeTab, setActiveTab] = useState<'practice' | 'diagnosis' | 'simulator' | 'patterns'>('practice');
+  const defaultUnitScope = initialUnitId || resolveUnitFilterFromStudyFocus(studyFocus, activeUnitId);
+
+  const [activeTab, setActiveTab] = useState<TrainingTab>(initialTab || 'practice');
   const [sourceFilter, setSourceFilter] = useState<QuestionSourceCategory | 'all'>('all');
   const [modelFilter, setModelFilter] = useState<string>('all');
-  const [unitFilter, setUnitFilter] = useState<string>(initialUnitId || 'all');
+  const [unitFilter, setUnitFilter] = useState<string>(defaultUnitScope);
   const [lessonFilter, setLessonFilter] = useState<string>(initialLessonId || 'all');
   const [typeFilter, setTypeFilter] = useState<QuestionType | 'all'>('all');
   const [levelFilter, setLevelFilter] = useState<CognitiveLevel | 'all'>('all');
   const [onlyWrongFilter, setOnlyWrongFilter] = useState<boolean>(false);
+  const [onlyUnansweredFilter, setOnlyUnansweredFilter] = useState<boolean>(false);
+  const [wrongSessionIds, setWrongSessionIds] = useState<string[] | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
-  // Simulator state (19 Geography items matching Ministerial structure: 8 T/F + 9 MCQ + 2 Map)
+  const defaultSimScope: 'full' | 'study-scope' =
+    defaultUnitScope === 'all' ? 'full' : 'study-scope';
+
+  // Simulator state (19 Geography items for full Ministerial, or scoped mini-exam for current unit/semester)
+  const [simScope, setSimScope] = useState<'full' | 'study-scope'>(defaultSimScope);
   const [simSource, setSimSource] = useState<'mixed' | 'ministerial-only'>('mixed');
   const [simPaper, setSimPaper] = useState<QuizQuestion[]>(() =>
-    buildSimulatedMinisterialPaper('mixed')
+    buildSimulatedMinisterialPaper('mixed', defaultSimScope, defaultUnitScope)
   );
   const [simAnswers, setSimAnswers] = useState<Record<string, { selected: string; isCorrect: boolean }>>({});
   const [simSubmitted, setSimSubmitted] = useState(false);
 
   React.useEffect(() => {
-    if (initialUnitId) setUnitFilter(initialUnitId);
+    if (initialUnitId) {
+      setUnitFilter(initialUnitId);
+    } else {
+      setUnitFilter(resolveUnitFilterFromStudyFocus(studyFocus, activeUnitId));
+    }
     if (initialLessonId) setLessonFilter(initialLessonId);
-    else if (initialUnitId) setLessonFilter('all');
-  }, [initialUnitId, initialLessonId]);
+    else setLessonFilter('all');
+    setCurrentPage(1);
+  }, [initialUnitId, initialLessonId, studyFocus, activeUnitId]);
+
+  React.useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [sourceFilter, modelFilter, unitFilter, lessonFilter, typeFilter, levelFilter, onlyWrongFilter, onlyUnansweredFilter]);
 
   const diagnosis = useMemo(() => diagnoseStudentProgress(progress), [progress]);
 
@@ -160,8 +226,9 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
   }, [simSubmitted, simAnswers, simPaper]);
 
   const availableLessons = useMemo(() => {
-    if (unitFilter === 'all') return TEXTBOOK_UNITS.flatMap((u) => u.lessons);
-    return getUnitById(unitFilter)?.lessons ?? [];
+    return TEXTBOOK_UNITS.filter((u) => matchesUnitScopeFilter(u.id, unitFilter)).flatMap(
+      (u) => u.lessons
+    );
   }, [unitFilter]);
 
   const filteredQuestions = useMemo(() => {
@@ -171,13 +238,20 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
       if (sourceFilter === 'ministerial' && modelFilter !== 'all') {
         if (!q.examModels?.includes(modelFilter)) return false;
       }
-      if (unitFilter !== 'all' && q.unitId !== unitFilter) return false;
+      if (!matchesUnitScopeFilter(q.unitId, unitFilter)) return false;
       if (lessonFilter !== 'all' && q.lessonId !== lessonFilter) return false;
       if (typeFilter !== 'all' && q.type !== typeFilter) return false;
       if (levelFilter !== 'all' && q.cognitiveLevel !== levelFilter) return false;
       if (onlyWrongFilter) {
-        const ans = progress.quizAnswers[q.id];
-        if (!ans || ans.isCorrect) return false;
+        if (wrongSessionIds) {
+          if (!wrongSessionIds.includes(q.id)) return false;
+        } else {
+          const ans = progress.quizAnswers[q.id];
+          if (!ans || ans.isCorrect) return false;
+        }
+      }
+      if (onlyUnansweredFilter && progress.quizAnswers[q.id]) {
+        return false;
       }
       return true;
     });
@@ -189,15 +263,31 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
     typeFilter,
     levelFilter,
     onlyWrongFilter,
+    wrongSessionIds,
+    onlyUnansweredFilter,
     progress.quizAnswers
   ]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredQuestions.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedQuestions = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filteredQuestions.slice(start, start + PAGE_SIZE);
+  }, [filteredQuestions, safePage]);
 
   const answeredInFilter = filteredQuestions.filter((q) => progress.quizAnswers[q.id]);
   const correctInFilter = answeredInFilter.filter((q) => progress.quizAnswers[q.id]?.isCorrect);
 
-  const generateNewSimPaper = (nextSource: 'mixed' | 'ministerial-only' = simSource) => {
+  const effectiveSimScopeFilter =
+    unitFilter !== 'all' ? unitFilter : resolveUnitFilterFromStudyFocus(studyFocus, activeUnitId);
+
+  const generateNewSimPaper = (
+    nextSource: 'mixed' | 'ministerial-only' = simSource,
+    nextSimScope: 'full' | 'study-scope' = simScope
+  ) => {
     setSimSource(nextSource);
-    setSimPaper(buildSimulatedMinisterialPaper(nextSource));
+    setSimScope(nextSimScope);
+    setSimPaper(buildSimulatedMinisterialPaper(nextSource, nextSimScope, effectiveSimScopeFilter));
     setSimAnswers({});
     setSimSubmitted(false);
   };
@@ -213,15 +303,46 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
     lessonFilter !== 'all' ||
     typeFilter !== 'all' ||
     levelFilter !== 'all' ||
-    onlyWrongFilter;
+    onlyWrongFilter ||
+    onlyUnansweredFilter;
+
+  const toggleOnlyWrong = () => {
+    if (onlyWrongFilter) {
+      setOnlyWrongFilter(false);
+      setWrongSessionIds(null);
+    } else {
+      const ids = Object.entries(progress.quizAnswers)
+        .filter(([, ans]) => !ans.isCorrect)
+        .map(([id]) => id);
+      setWrongSessionIds(ids);
+      setOnlyUnansweredFilter(false);
+      setOnlyWrongFilter(true);
+    }
+  };
+
+  const refreshWrongSessionList = () => {
+    const ids = Object.entries(progress.quizAnswers)
+      .filter(([, ans]) => !ans.isCorrect)
+      .map(([id]) => id);
+    setWrongSessionIds(ids);
+    setCurrentPage(1);
+  };
 
   const handlePracticeLessonMistakes = (targetUnitId: string, targetLessonId: string) => {
+    const lessonWrongIds = QUIZ_QUESTIONS.filter((q) => {
+      if (q.unitId !== targetUnitId || q.lessonId !== targetLessonId) return false;
+      const ans = progress.quizAnswers[q.id];
+      return ans && !ans.isCorrect;
+    }).map((q) => q.id);
+
     setSourceFilter('all');
     setModelFilter('all');
     setTypeFilter('all');
     setLevelFilter('all');
+    setOnlyUnansweredFilter(false);
     setUnitFilter(targetUnitId);
     setLessonFilter(targetLessonId);
+    setWrongSessionIds(lessonWrongIds);
     setOnlyWrongFilter(true);
     setActiveTab('practice');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -282,7 +403,7 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
               }`}
             >
               <FileCheck2 className="h-3.5 w-3.5" />
-              <span>محاكي الامتحان الوزاري (19 سؤالاً)</span>
+              <span>محاكي الامتحان</span>
             </button>
             <button
               type="button"
@@ -370,7 +491,7 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
               )}
 
               <div>
-                <label className="mb-1 block text-[11px] font-semibold text-slate-500">الوحدة</label>
+                <label className="mb-1 block text-[11px] font-semibold text-slate-500">النطاق / الوحدة</label>
                 <select
                   value={unitFilter}
                   onChange={(e) => {
@@ -380,6 +501,8 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs"
                 >
                   <option value="all">كل الوحدات (1 – 4)</option>
+                  <option value="semester-1">الفصل الأول (الوحدتان 1 و2)</option>
+                  <option value="semester-2">الفصل الثاني (الوحدتان 3 و4)</option>
                   {TEXTBOOK_UNITS.map((u) => (
                     <option key={u.id} value={u.id}>
                       الوحدة {u.unitNumber}: {u.title}
@@ -440,6 +563,28 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
 
       {activeTab === 'practice' && (
         <>
+          {/* Scope Focus Indicator when scoped to a unit or semester */}
+          {unitFilter !== 'all' && (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-200 bg-sky-50/70 px-4 py-2.5 text-xs text-slate-700">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="h-3.5 w-3.5 text-sky-700" />
+                <span>
+                  نطاق التدريبات المعروض: <strong>{getStudyScopeLabel(unitFilter)}</strong>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setUnitFilter('all');
+                  setLessonFilter('all');
+                }}
+                className="font-semibold text-sky-800 hover:underline"
+              >
+                عرض أسئلة كل الوحدات (1–4)
+              </button>
+            </div>
+          )}
+
           {/* Quick Diagnostic Callout when student has errors */}
           {diagnosis.lessonsNeedingReview.length > 0 && (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/70 px-5 py-3.5 text-xs">
@@ -500,14 +645,40 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
                 الإجابات الصحيحة:{' '}
                 <strong className="font-mono tabular-nums text-emerald-700">{correctInFilter.length}</strong>
               </span>
+              {totalPages > 1 && (
+                <>
+                  <span className="text-slate-300">|</span>
+                  <span>
+                    الصفحة <strong className="font-mono">{safePage}</strong> / {totalPages}
+                  </span>
+                </>
+              )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setOnlyUnansweredFilter((v) => !v);
+                  if (!onlyUnansweredFilter) {
+                    setOnlyWrongFilter(false);
+                    setWrongSessionIds(null);
+                  }
+                }}
+                className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold transition-colors ${
+                  onlyUnansweredFilter
+                    ? 'border-sky-600 bg-sky-600 text-white'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <span>غير المحلولة فقط</span>
+              </button>
+
               {diagnosis.totalWrong > 0 && (
                 <button
                   type="button"
-                  onClick={() => setOnlyWrongFilter((v) => !v)}
-                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold transition-colors ${
+                  onClick={toggleOnlyWrong}
+                  className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold transition-colors ${
                     onlyWrongFilter
                       ? 'border-rose-600 bg-rose-600 text-white'
                       : 'border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100'
@@ -515,6 +686,16 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
                 >
                   <Target className="h-3.5 w-3.5" />
                   <span>أخطائي فقط ({diagnosis.totalWrong})</span>
+                </button>
+              )}
+
+              {onlyWrongFilter && (
+                <button
+                  type="button"
+                  onClick={refreshWrongSessionList}
+                  className="inline-flex min-h-[34px] items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+                >
+                  <span>تحديث قائمة الأخطاء</span>
                 </button>
               )}
 
@@ -529,8 +710,10 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
                     setTypeFilter('all');
                     setLevelFilter('all');
                     setOnlyWrongFilter(false);
+                    setOnlyUnansweredFilter(false);
+                    setWrongSessionIds(null);
                   }}
-                  className="inline-flex items-center gap-1 font-medium text-sky-700 hover:underline"
+                  className="inline-flex min-h-[34px] items-center gap-1 font-medium text-sky-700 hover:underline"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
                   <span>إظهار كل الأسئلة</span>
@@ -543,22 +726,63 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
             <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-600">
               {onlyWrongFilter
                 ? 'أحسنت! لا توجد أخطاء متبقية ضمن التصفية الحالية.'
-                : 'لا توجد أسئلة مطابقة للتصفية الحالية. جرّب تغيير المصدر أو نوع السؤال.'}
+                : onlyUnansweredFilter
+                  ? 'أحسنت! لقد أجبت عن جميع الأسئلة ضمن هذا النطاق.'
+                  : 'لا توجد أسئلة مطابقة للتصفية الحالية. جرّب تغيير المصدر أو نوع السؤال.'}
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredQuestions.map((q, idx) => (
-                <QuestionCard
-                  key={q.id}
-                  index={idx + 1}
-                  question={q}
-                  savedAnswer={progress.quizAnswers[q.id]}
-                  onRecordAnswer={onRecordAnswer}
-                  onGoToLesson={onGoToLesson}
-                  onGoToAtlas={onGoToAtlas}
-                />
-              ))}
-            </div>
+            <>
+              <div className="space-y-4">
+                {paginatedQuestions.map((q, idx) => (
+                  <QuestionCard
+                    key={q.id}
+                    index={(safePage - 1) * PAGE_SIZE + idx + 1}
+                    question={q}
+                    savedAnswer={progress.quizAnswers[q.id]}
+                    onRecordAnswer={onRecordAnswer}
+                    onGoToLesson={onGoToLesson}
+                    onGoToAtlas={onGoToAtlas}
+                  />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <nav
+                  aria-label="ترقيم صفحات الأسئلة"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs"
+                >
+                  <button
+                    type="button"
+                    disabled={safePage <= 1}
+                    onClick={() => {
+                      setCurrentPage((p) => Math.max(1, p - 1));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="inline-flex min-h-[38px] items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                    <span>السابق</span>
+                  </button>
+
+                  <span className="font-mono font-semibold text-slate-700">
+                    صفحة {safePage} من {totalPages} ({filteredQuestions.length} سؤالاً)
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={safePage >= totalPages}
+                    onClick={() => {
+                      setCurrentPage((p) => Math.min(totalPages, p + 1));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="inline-flex min-h-[38px] items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                  >
+                    <span>التالي</span>
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                </nav>
+              )}
+            </>
           )}
         </>
       )}
@@ -582,19 +806,45 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h2 className="font-display text-lg font-extrabold text-slate-900">
-                  نموذج محاكاة الامتحان الوزاري في الجغرافيا (19 فقرة = 30 درجة)
+                  {simScope === 'full' || effectiveSimScopeFilter === 'all'
+                    ? `نموذج محاكاة الامتحان الوزاري في الجغرافيا (${simPaper.length} فقرة = 30 درجة)`
+                    : `اختبار تجريبي مركز لنطاق: ${getStudyScopeLabel(effectiveSimScopeFilter)} (${simPaper.length} فقرة)`}
                 </h2>
                 <p className="mt-1 text-xs leading-relaxed text-slate-700">
-                  مطابق لهيكلة القسم الجغرافي في ورقة الاجتماعيات الوزارية (2025–2026م):
-                  <strong> 8 فقرات صواب/خطأ (س1–س8)</strong> + <strong>9 فقرات اختيار من متعدد (س21–س29)</strong> +{' '}
-                  <strong>فقرتا الخريطة الصماء لليمن (س49–س50)</strong>.
+                  {simScope === 'full' || effectiveSimScopeFilter === 'all' ? (
+                    <>
+                      مطابق لهيكلة القسم الجغرافي في ورقة الاجتماعيات الوزارية (2025–2026م):
+                      <strong> 8 فقرات صواب/خطأ (س1–س8)</strong> + <strong>9 فقرات اختيار من متعدد (س21–س29)</strong> +{' '}
+                      <strong>فقرتا الخريطة الصماء لليمن (س49–س50)</strong>.
+                    </>
+                  ) : (
+                    <>
+                      اختبار قصير مولّد من أسئلة نطاق دراستك الحالي فقط حتى تختبر نفسك فيما درسته دون التشتت بأسئلة وحدات لاحقة.
+                    </>
+                  )}
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                {effectiveSimScopeFilter !== 'all' && (
+                  <select
+                    aria-label="نطاق أسئلة المحاكي"
+                    value={simScope}
+                    onChange={(e) =>
+                      generateNewSimPaper(simSource, e.target.value as 'full' | 'study-scope')
+                    }
+                    className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800"
+                  >
+                    <option value="study-scope">
+                      نطاق المذاكرة الحالي ({getStudyScopeLabel(effectiveSimScopeFilter)})
+                    </option>
+                    <option value="full">الامتحان الوزاري الشامل (الوحدات 1–4)</option>
+                  </select>
+                )}
+
                 <select
                   value={simSource}
-                  onChange={(e) => generateNewSimPaper(e.target.value as 'mixed' | 'ministerial-only')}
+                  onChange={(e) => generateNewSimPaper(e.target.value as 'mixed' | 'ministerial-only', simScope)}
                   className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800"
                 >
                   <option value="mixed">وزاري + أسئلة مولّدة متوقعة التدريب</option>
@@ -603,7 +853,7 @@ export const TrainingPortal: React.FC<TrainingPortalProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => generateNewSimPaper(simSource)}
+                  onClick={() => generateNewSimPaper(simSource, simScope)}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800"
                 >
                   <Shuffle className="h-3.5 w-3.5" />

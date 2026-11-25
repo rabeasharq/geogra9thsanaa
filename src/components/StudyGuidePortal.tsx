@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ALL_CONCEPTS, TEXTBOOK_UNITS, getUnitById } from '../data/bookIndex';
+import {
+  ALL_CONCEPTS,
+  TEXTBOOK_UNITS,
+  getStudyScopeLabel,
+  getUnitById,
+  matchesUnitScopeFilter,
+  normalizeArabicSearch,
+  resolveUnitFilterFromStudyFocus
+} from '../data/bookIndex';
+import { StudyFocusScope } from '../types/textbook';
 import {
   COMPARISON_CATEGORIES,
   ComparisonCategoryId,
@@ -31,7 +40,8 @@ import {
   ShieldCheck,
   Download,
   Maximize2,
-  Trash2
+  Trash2,
+  SlidersHorizontal
 } from 'lucide-react';
 
 export type StudyTab =
@@ -46,6 +56,8 @@ export type StudyTab =
 interface StudyGuidePortalProps {
   initialUnitId?: string;
   initialTab?: StudyTab;
+  studyFocus?: StudyFocusScope;
+  activeUnitId?: string;
   telemetry: BookletTelemetryHandle;
   bookletScope: BookletScope;
   onChangeBookletScope: (scope: BookletScope) => void;
@@ -57,6 +69,8 @@ interface StudyGuidePortalProps {
 export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   initialUnitId,
   initialTab,
+  studyFocus = 'active-unit',
+  activeUnitId = 'unit-1',
   telemetry,
   bookletScope,
   onChangeBookletScope,
@@ -64,8 +78,10 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   onGoToAtlas,
   onGoToTraining
 }) => {
+  const defaultUnitScope = initialUnitId || resolveUnitFilterFromStudyFocus(studyFocus, activeUnitId);
+
   const [activeTab, setActiveTab] = useState<StudyTab>(initialTab || 'summary');
-  const [unitFilter, setUnitFilter] = useState<string>(initialUnitId || 'all');
+  const [unitFilter, setUnitFilter] = useState<string>(defaultUnitScope);
   const [searchTerm, setSearchTerm] = useState('');
   const [tableSearch, setTableSearch] = useState('');
   const [tableCategory, setTableCategory] = useState<ComparisonCategoryId>('all');
@@ -76,6 +92,7 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   const [vaultPackages, setVaultPackages] = useState<EncryptedVaultMetadata[]>([]);
   const [savingEncrypted, setSavingEncrypted] = useState<boolean>(false);
   const [vaultMessage, setVaultMessage] = useState<string | null>(null);
+  const [showAdvancedOffline, setShowAdvancedOffline] = useState<boolean>(false);
 
   useEffect(() => {
     void listEncryptedBookletPackages().then(setVaultPackages);
@@ -92,31 +109,33 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
       ) {
         onChangeBookletScope(initialUnitId);
       }
+    } else {
+      setUnitFilter(resolveUnitFilterFromStudyFocus(studyFocus, activeUnitId));
     }
-  }, [initialUnitId, onChangeBookletScope]);
+  }, [initialUnitId, studyFocus, activeUnitId, onChangeBookletScope]);
 
   React.useEffect(() => {
     if (initialTab) setActiveTab(initialTab);
   }, [initialTab]);
 
   const filteredUnits = useMemo(() => {
-    return unitFilter === 'all'
-      ? TEXTBOOK_UNITS
-      : TEXTBOOK_UNITS.filter((u) => u.id === unitFilter);
+    return TEXTBOOK_UNITS.filter((u) => matchesUnitScopeFilter(u.id, unitFilter));
   }, [unitFilter]);
 
   const filteredConcepts = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
+    const q = normalizeArabicSearch(searchTerm);
     return ALL_CONCEPTS.filter((c) => {
-      const unitOk = unitFilter === 'all' || c.unitId === unitFilter;
+      const unitOk = matchesUnitScopeFilter(c.unitId, unitFilter);
       const textOk =
-        !q || c.term.toLowerCase().includes(q) || c.definition.toLowerCase().includes(q);
+        !q ||
+        normalizeArabicSearch(c.term).includes(q) ||
+        normalizeArabicSearch(c.definition).includes(q);
       return unitOk && textOk;
     });
   }, [unitFilter, searchTerm]);
 
   const allTables = useMemo(() => {
-    const q = tableSearch.trim().toLowerCase();
+    const q = normalizeArabicSearch(tableSearch);
     return filteredUnits
       .flatMap((u) =>
         u.lessons.flatMap((l) =>
@@ -134,9 +153,9 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
       .filter((t) => {
         if (!q) return true;
         return (
-          t.title.toLowerCase().includes(q) ||
-          t.lessonTitle.toLowerCase().includes(q) ||
-          t.rows.some((r) => r.some((cell) => cell.toLowerCase().includes(q)))
+          normalizeArabicSearch(t.title).includes(q) ||
+          normalizeArabicSearch(t.lessonTitle).includes(q) ||
+          t.rows.some((r) => r.some((cell) => normalizeArabicSearch(cell).includes(q)))
         );
       });
   }, [filteredUnits, tableSearch]);
@@ -158,15 +177,15 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
   }, [filteredUnits]);
 
   const matchingTablesBeforeCategory = useMemo(() => {
-    const q = tableSearch.trim().toLowerCase();
+    const q = normalizeArabicSearch(tableSearch);
     return MINISTERIAL_COMPARATIVE_TABLES.filter((t) => {
-      const unitOk = unitFilter === 'all' || t.unitId === unitFilter;
+      const unitOk = matchesUnitScopeFilter(t.unitId, unitFilter);
       if (!unitOk) return false;
       if (!q) return true;
       return (
-        t.title.toLowerCase().includes(q) ||
-        t.focusTip.toLowerCase().includes(q) ||
-        t.rows.some((r) => r.some((cell) => cell.toLowerCase().includes(q)))
+        normalizeArabicSearch(t.title).includes(q) ||
+        normalizeArabicSearch(t.focusTip).includes(q) ||
+        t.rows.some((r) => r.some((cell) => normalizeArabicSearch(cell).includes(q)))
       );
     });
   }, [unitFilter, tableSearch]);
@@ -261,59 +280,22 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
             <button
               type="button"
               onClick={() => setReaderModalOpen(true)}
-              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-sky-200 bg-sky-50 px-3.5 py-2.5 text-xs font-semibold text-sky-900 transition-colors hover:bg-sky-100"
+              className="inline-flex min-h-[40px] shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-sky-200 bg-sky-50 px-3.5 py-2 text-xs font-semibold text-sky-900 transition-colors hover:bg-sky-100"
             >
               <Maximize2 className="h-4 w-4" />
-              <span>فتح نافذة الملزمة داخل التطبيق</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={savingEncrypted}
-              onClick={() => void handleSaveEncryptedOffline()}
-              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs font-semibold text-emerald-900 transition-colors hover:bg-emerald-100 disabled:opacity-60"
-            >
-              <Lock className="h-4 w-4" />
-              <span>{savingEncrypted ? 'جارٍ التشفير...' : 'حفظ مشفّر أوفلاين (AES-256)'}</span>
+              <span>قراءة الملزمة في نافذة</span>
             </button>
 
             <button
               type="button"
               onClick={handlePrintPdf}
-              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+              className="inline-flex min-h-[40px] shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
             >
               <Printer className="h-4 w-4" />
-              <span>طباعة / تصدير الكتيّب PDF</span>
+              <span>طباعة / تصدير PDF</span>
             </button>
           </div>
         </div>
-
-        {/* Public Downloads Total & Local Encrypted Offline Vault Strip */}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50/70 px-4 py-2.5 text-xs">
-          <div className="flex flex-wrap items-center gap-5">
-            <div className="inline-flex items-center gap-1.5 text-slate-700">
-              <Download className="h-3.5 w-3.5 text-sky-700" />
-              <span>إجمالي عدد مرات التحميل:</span>
-              <strong className="font-mono tabular-nums text-slate-900">
-                {telemetry.publicStats.totalDownloads}
-              </strong>
-            </div>
-
-            <div className="inline-flex items-center gap-1.5 text-slate-700">
-              <ShieldCheck className="h-3.5 w-3.5 text-amber-700" />
-              <span>الحزم المشفرة على جهازك:</span>
-              <strong className="font-mono tabular-nums text-slate-900">
-                {vaultPackages.length}
-              </strong>
-            </div>
-          </div>
-        </div>
-
-        {vaultMessage && (
-          <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-medium text-emerald-900">
-            {vaultMessage}
-          </div>
-        )}
 
         {/* Unit Filter + View Tabs */}
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
@@ -323,7 +305,7 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
                 key={t.id}
                 type="button"
                 onClick={() => setActiveTab(t.id)}
-                className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`min-h-[36px] whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                   activeTab === t.id
                     ? 'bg-amber-600 text-white'
                     : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
@@ -336,12 +318,14 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
 
           <div className="flex flex-wrap items-center gap-2">
             <select
-              aria-label="تصفية حسب الوحدة"
+              aria-label="تصفية حسب النطاق أو الوحدة"
               value={unitFilter}
               onChange={(e) => setUnitFilter(e.target.value)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800"
+              className="min-h-[36px] rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800"
             >
               <option value="all">جميع الوحدات (1 – 4)</option>
+              <option value="semester-1">الفصل الأول (الوحدتان 1 و2)</option>
+              <option value="semester-2">الفصل الثاني (الوحدتان 3 و4)</option>
               {TEXTBOOK_UNITS.map((u) => (
                 <option key={u.id} value={u.id}>
                   الوحدة {u.unitNumber}: {u.title}
@@ -350,6 +334,25 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
             </select>
           </div>
         </div>
+
+        {/* Scope Focus Reminder when filtered to a single unit/semester */}
+        {unitFilter !== 'all' && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-sky-200 bg-sky-50/70 px-3.5 py-2 text-xs text-slate-700">
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="h-3.5 w-3.5 text-sky-700" />
+              <span>
+                تعرض الآن محتوى <strong>{getStudyScopeLabel(unitFilter)}</strong> فقط حتى لا تتشتت بدروس أخرى.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setUnitFilter('all')}
+              className="font-semibold text-sky-800 hover:underline"
+            >
+              عرض كل المنهج (1–4)
+            </button>
+          </div>
+        )}
       </section>
 
       <div className="no-print space-y-6">
@@ -522,7 +525,12 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
       {activeTab === 'tables' && (
         <div className="space-y-8">
           {/* Interactive Side-by-Side Entity Comparator */}
-          <SideBySideComparator onGoToLesson={onGoToLesson} onGoToAtlas={onGoToAtlas} />
+          <SideBySideComparator
+            unitFilter={unitFilter}
+            onShowAllUnits={() => setUnitFilter('all')}
+            onGoToLesson={onGoToLesson}
+            onGoToAtlas={onGoToAtlas}
+          />
 
           {/* High-Focus Standalone Ministerial Comparative Tables */}
           <div className="space-y-4">
@@ -967,6 +975,12 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
               </div>
             </div>
 
+            {vaultMessage && (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-medium text-emerald-900">
+                {vaultMessage}
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-1.5">
               {(
                 [
@@ -1014,51 +1028,83 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
               </label>
             </div>
 
-            {/* Saved Encrypted Offline Vault List */}
-            {vaultPackages.length > 0 && (
-              <div className="rounded-lg border border-emerald-200 bg-white p-3 text-xs">
-                <div className="mb-2 flex items-center gap-1.5 font-bold text-emerald-900">
-                  <Lock className="h-3.5 w-3.5" />
-                  <span>خزنة الملفات المشفرة على جهازك ({vaultPackages.length}):</span>
+            {/* Collapsible Advanced Offline Vault & Stats */}
+            <div className="border-t border-sky-200/70 pt-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-700">
+                <div className="flex flex-wrap items-center gap-4">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Download className="h-3.5 w-3.5 text-sky-700" />
+                    <span>مرات التحميل:</span>
+                    <strong className="font-mono tabular-nums text-slate-900">
+                      {telemetry.publicStats.totalDownloads}
+                    </strong>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5 text-amber-700" />
+                    <span>الحزم المشفرة على جهازك:</span>
+                    <strong className="font-mono tabular-nums text-slate-900">
+                      {vaultPackages.length}
+                    </strong>
+                  </span>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {vaultPackages.map((pkg) => (
-                    <div
-                      key={pkg.scope}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
-                    >
-                      <div className="min-w-0">
-                        <div className="truncate font-semibold text-slate-900">{pkg.title}</div>
-                        <div className="font-mono text-[10px] text-slate-500">
-                          {pkg.algorithm} · {(pkg.byteSize / 1024).toFixed(1)} KB · SHA {pkg.sha256.slice(0, 8)}
+
+                {vaultPackages.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedOffline((v) => !v)}
+                    className="font-semibold text-sky-800 hover:underline"
+                  >
+                    {showAdvancedOffline
+                      ? 'إخفاء خزنة الحفظ المشفّر'
+                      : 'إدارة خزنة الحفظ المشفّر أوفلاين (متقدم)'}
+                  </button>
+                )}
+              </div>
+
+              {showAdvancedOffline && vaultPackages.length > 0 && (
+                <div className="mt-3 rounded-lg border border-emerald-200 bg-white p-3 text-xs">
+                  <div className="mb-2 flex items-center gap-1.5 font-bold text-emerald-900">
+                    <Lock className="h-3.5 w-3.5" />
+                    <span>خزنة الملفات المشفرة على جهازك ({vaultPackages.length}):</span>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {vaultPackages.map((pkg) => (
+                      <div
+                        key={pkg.scope}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <div className="truncate font-semibold text-slate-900">{pkg.title}</div>
+                          <div className="font-mono text-[10px] text-slate-500">
+                            {pkg.algorithm} · {(pkg.byteSize / 1024).toFixed(1)} KB · SHA {pkg.sha256.slice(0, 8)}
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const msg = await handleVerifyEncryptedPackage(pkg.scope);
+                              if (msg) setVaultMessage(msg);
+                            }}
+                            className="rounded border border-sky-200 bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-800 hover:bg-sky-100"
+                          >
+                            فحص
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`حذف الحزمة المشفرة ${pkg.title}`}
+                            onClick={() => void handleDeleteEncryptedPackage(pkg.scope)}
+                            className="rounded border border-rose-200 bg-rose-50 p-1 text-rose-700 hover:bg-rose-100"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const msg = await handleVerifyEncryptedPackage(pkg.scope);
-                            if (msg) setVaultMessage(msg);
-                          }}
-                          className="rounded border border-sky-200 bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-800 hover:bg-sky-100"
-                        >
-                          فحص
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={`حذف الحزمة المشفرة ${pkg.title}`}
-                          onClick={() => void handleDeleteEncryptedPackage(pkg.scope)}
-                          className="rounded border border-rose-200 bg-rose-50 p-1 text-rose-700 hover:bg-rose-100"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-
+              )}
+            </div>
           </section>
         )}
 

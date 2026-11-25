@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { PortalId } from '../types/textbook';
+import { PortalId, StudyFocusScope } from '../types/textbook';
 import { FONT_SCALE_STEPS, ReadingThemeMode } from '../hooks/useReadingPreferences';
 import {
   Search,
@@ -19,6 +19,9 @@ interface TopNavProps {
   activePortal: PortalId;
   onSelectPortal: (portal: PortalId) => void;
   onOpenSearch: () => void;
+  studyFocus: StudyFocusScope;
+  onChangeStudyFocus: (focus: StudyFocusScope) => void;
+  activeUnitNumber: number;
   themeMode: ReadingThemeMode;
   fontScale: number;
   onChangeThemeMode: (mode: ReadingThemeMode) => void;
@@ -29,7 +32,7 @@ interface TopNavProps {
 }
 
 const NAV_ITEMS: { id: PortalId; label: string }[] = [
-  { id: 'units', label: 'الوحدات' },
+  { id: 'units', label: 'الدروس' },
   { id: 'atlas', label: 'الأطلس' },
   { id: 'map-lab', label: 'رسم الخرائط' },
   { id: 'study-guide', label: 'الملزمة' },
@@ -70,6 +73,9 @@ export const TopNav: React.FC<TopNavProps> = ({
   activePortal,
   onSelectPortal,
   onOpenSearch,
+  studyFocus,
+  onChangeStudyFocus,
+  activeUnitNumber,
   themeMode,
   fontScale,
   onChangeThemeMode,
@@ -103,27 +109,34 @@ export const TopNav: React.FC<TopNavProps> = ({
   const activeThemeShort =
     THEME_OPTIONS.find((t) => t.id === themeMode)?.shortLabel ?? 'نهاري';
 
+  const scopeTabs: { id: StudyFocusScope; short: string; label: string }[] = [
+    { id: 'active-unit', short: `و${activeUnitNumber}`, label: `الوحدة الحالية (${activeUnitNumber})` },
+    { id: 'semester-1', short: 'ف1', label: 'الفصل الأول (الوحدتان 1 و2)' },
+    { id: 'semester-2', short: 'ف2', label: 'الفصل الثاني (الوحدتان 3 و4)' },
+    { id: 'all', short: 'الكل', label: 'الكتاب كاملاً (1-4)' }
+  ];
+
   return (
     <header className="no-print sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
+      <div className="mx-auto flex h-[56px] max-w-[1400px] items-center justify-between gap-[6px] px-[10px] sm:gap-3 sm:px-6">
         {/* Zone 1: Brand Icon (Real Arab World Map) & Wordmark */}
         <button
           type="button"
           onClick={() => handleNavClick('home')}
-          className="flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-lg py-1 text-slate-900 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-sky-600"
+          className="flex min-w-0 shrink items-center gap-[6px] whitespace-nowrap rounded-[8px] py-[4px] text-slate-900 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-sky-600 sm:shrink-0 sm:gap-2.5"
         >
           <img
             src="/icon.svg"
             alt="أيقونة خارطة الوطن العربي"
-            className="h-8 w-8 shrink-0 rounded-lg border border-sky-200/80 shadow-xs"
+            className="h-[28px] w-[28px] shrink-0 rounded-[8px] border border-sky-200/80 shadow-xs sm:h-[32px] sm:w-[32px]"
           />
-          <span className="font-display text-base font-bold tracking-tight sm:text-lg">
+          <span className="font-display max-w-[110px] truncate text-[14px] font-bold tracking-tight min-[400px]:max-w-none sm:text-[18px]">
             الجغرافيا التفاعلية
           </span>
         </button>
 
         {/* Zone 2: Primary navigation links (desktop) */}
-        <nav aria-label="التنقل الرئيس" className="hidden items-center gap-4 lg:flex xl:gap-6">
+        <nav aria-label="التنقل الرئيس" className="hidden items-center gap-4 lg:flex xl:gap-5">
           {NAV_ITEMS.map((item) => {
             const isActive = activePortal === item.id;
             return (
@@ -132,7 +145,7 @@ export const TopNav: React.FC<TopNavProps> = ({
                 type="button"
                 onClick={() => handleNavClick(item.id)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`shrink-0 whitespace-nowrap border-b-2 py-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-sky-600 ${
+                className={`shrink-0 whitespace-nowrap border-b-2 py-[16px] text-[14px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-sky-600 ${
                   isActive
                     ? 'border-sky-600 text-sky-700'
                     : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900'
@@ -144,11 +157,38 @@ export const TopNav: React.FC<TopNavProps> = ({
           })}
         </nav>
 
-        {/* Zone 3: Font Zoom + Theme Mode + PWA + Search + Mobile Menu */}
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          {/* Quick 1-Tap Font Enlargement Controls */}
+        {/* Zone 3: Quick Study Scope + Display Controls + PWA + Search + Mobile Menu */}
+        <div className="flex shrink-0 items-center gap-[4px] sm:gap-2">
+          {/* Quick 1-Tap Study Scope Switcher (و1 | ف1 | ف2 | الكل) */}
           <div
-            className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5"
+            role="group"
+            aria-label="نطاق المذاكرة السريع"
+            className="flex items-center rounded-[8px] border border-slate-200 bg-slate-50 p-[2px]"
+          >
+            {scopeTabs.map((tab) => {
+              const active = studyFocus === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => onChangeStudyFocus(tab.id)}
+                  title={tab.label}
+                  aria-pressed={active}
+                  className={`min-h-[30px] shrink-0 whitespace-nowrap rounded-[6px] px-[6px] py-[4px] text-[11px] font-bold transition-colors sm:px-[8px] ${
+                    active
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {tab.short}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Quick 1-Tap Font Enlargement Controls (Desktop/Tablet) */}
+          <div
+            className="hidden items-center rounded-[8px] border border-slate-200 bg-slate-50 p-[2px] sm:flex"
             aria-label="التحكم في حجم الخط"
           >
             <button
@@ -157,12 +197,12 @@ export const TopNav: React.FC<TopNavProps> = ({
               disabled={fontScale <= 100}
               title="تصغير الخط"
               aria-label="تصغير حجم الخط"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-xs font-bold text-slate-700 transition-colors hover:bg-white disabled:opacity-40"
+              className="inline-flex h-[32px] w-[32px] items-center justify-center rounded-[6px] text-[12px] font-bold text-slate-700 transition-colors hover:bg-white disabled:opacity-40"
             >
-              <ZoomOut className="h-3.5 w-3.5" />
+              <ZoomOut className="h-[14px] w-[14px]" />
             </button>
             <span
-              className="hidden px-1.5 font-mono text-[11px] font-bold tabular-nums text-slate-700 sm:inline"
+              className="hidden px-[6px] font-mono text-[11px] font-bold tabular-nums text-slate-700 md:inline"
               title="حجم الخط الحالي"
             >
               {fontScale}%
@@ -173,14 +213,14 @@ export const TopNav: React.FC<TopNavProps> = ({
               disabled={fontScale >= 160}
               title="تكبير الخط لمن يجد صعوبة في القراءة"
               aria-label="تكبير حجم الخط"
-              className="inline-flex h-8 items-center justify-center gap-1 rounded-md px-2 text-xs font-bold text-slate-800 transition-colors hover:bg-white disabled:opacity-40"
+              className="inline-flex h-[32px] items-center justify-center gap-[4px] rounded-[6px] px-[8px] text-[12px] font-bold text-slate-800 transition-colors hover:bg-white disabled:opacity-40"
             >
-              <ZoomIn className="h-3.5 w-3.5 text-sky-700" />
+              <ZoomIn className="h-[14px] w-[14px] text-sky-700" />
               <span className="hidden xl:inline">تكبير</span>
             </button>
           </div>
 
-          {/* Reading / Night Mode Selector Popover */}
+          {/* Reading / Night Mode & Font Size Popover */}
           <div className="relative" ref={popoverRef}>
             <button
               type="button"
@@ -188,11 +228,12 @@ export const TopNav: React.FC<TopNavProps> = ({
               aria-expanded={displayPopoverOpen}
               aria-label="إعدادات وضع القراءة والوضع الليلي وحجم الخط"
               title="تبديل الوضع الليلي ووضع القراءة وتكبير الخط"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-800 transition-colors hover:bg-slate-100"
+              className="inline-flex h-[32px] items-center gap-[4px] rounded-[8px] border border-slate-200 bg-slate-50 px-[8px] text-[12px] font-semibold text-slate-800 transition-colors hover:bg-slate-100 sm:h-[36px] sm:gap-[6px] sm:px-[10px]"
             >
-              <ActiveThemeIcon className="h-3.5 w-3.5 text-amber-600" />
+              <ActiveThemeIcon className="h-[14px] w-[14px] text-amber-600" />
+              <span className="font-mono text-[11px] font-bold text-slate-700 sm:hidden">A±</span>
               <span className="hidden sm:inline">{activeThemeShort}</span>
-              <SlidersHorizontal className="h-3 w-3 text-slate-400" />
+              <SlidersHorizontal className="hidden h-[12px] w-[12px] text-slate-400 sm:inline" />
             </button>
 
             {displayPopoverOpen && (
@@ -276,16 +317,19 @@ export const TopNav: React.FC<TopNavProps> = ({
             )}
           </div>
 
-          <PWAInstallButton compact />
+          <div className="hidden sm:block">
+            <PWAInstallButton compact />
+          </div>
 
           <button
             type="button"
             onClick={onOpenSearch}
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-slate-900 px-3 text-xs font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:gap-2 sm:px-3.5"
+            aria-label="البحث والمفضلة"
+            className="inline-flex h-[32px] w-[32px] shrink-0 items-center justify-center gap-[6px] whitespace-nowrap rounded-[8px] bg-slate-900 text-[12px] font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:h-[36px] sm:w-auto sm:px-[14px]"
           >
-            <Search className="h-3.5 w-3.5" />
+            <Search className="h-[14px] w-[14px]" />
             <span className="hidden md:inline">البحث والمفضلة</span>
-            <span className="md:hidden">بحث</span>
+            <span className="hidden sm:inline md:hidden">بحث</span>
           </button>
 
           <button
@@ -293,9 +337,9 @@ export const TopNav: React.FC<TopNavProps> = ({
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-label={mobileMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
             aria-expanded={mobileMenuOpen}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 lg:hidden"
+            className="inline-flex h-[32px] w-[32px] items-center justify-center rounded-[8px] border border-slate-200 text-slate-700 hover:bg-slate-50 sm:h-[36px] sm:w-[36px] lg:hidden"
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? <X className="h-[18px] w-[18px]" /> : <Menu className="h-[18px] w-[18px]" />}
           </button>
         </div>
       </div>
@@ -307,6 +351,17 @@ export const TopNav: React.FC<TopNavProps> = ({
           className="space-y-3 border-t border-slate-200 bg-white px-4 py-3 lg:hidden"
         >
           <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleNavClick('home')}
+              className={`min-h-[40px] rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                activePortal === 'home'
+                  ? 'bg-sky-600 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              الرئيسية
+            </button>
             {NAV_ITEMS.map((item) => {
               const isActive = activePortal === item.id;
               return (
@@ -326,9 +381,33 @@ export const TopNav: React.FC<TopNavProps> = ({
             })}
           </div>
 
-          {/* Mobile Quick Reading Modes */}
+          {/* Mobile Quick Study Scope Selector */}
+          <div className="border-t border-slate-100 pt-2.5">
+            <div className="mb-1.5 text-[11px] font-semibold text-slate-500">نطاق المذاكرة في الملزمة والتدريبات</div>
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              {scopeTabs.map((tab) => {
+                const active = studyFocus === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => onChangeStudyFocus(tab.id)}
+                    className={`min-h-[36px] rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
+                      active
+                        ? 'border-sky-600 bg-sky-600 text-white'
+                        : 'border-slate-200 bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Mobile Quick Reading Modes & Font Zoom & PWA Install */}
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2.5">
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               {THEME_OPTIONS.map((opt) => {
                 const Icon = opt.icon;
                 const active = themeMode === opt.id;
@@ -349,7 +428,31 @@ export const TopNav: React.FC<TopNavProps> = ({
                 );
               })}
             </div>
-            <span className="font-mono text-xs font-bold text-slate-600">الخط: {fontScale}%</span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={onDecreaseFont}
+                disabled={fontScale <= 100}
+                aria-label="تصغير الخط"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 disabled:opacity-40"
+              >
+                <ZoomOut className="h-3.5 w-3.5" />
+              </button>
+              <span className="font-mono text-xs font-bold tabular-nums text-slate-700">{fontScale}%</span>
+              <button
+                type="button"
+                onClick={onIncreaseFont}
+                disabled={fontScale >= 160}
+                aria-label="تكبير الخط"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 disabled:opacity-40"
+              >
+                <ZoomIn className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 pt-2.5 sm:hidden">
+            <PWAInstallButton />
           </div>
         </nav>
       )}
