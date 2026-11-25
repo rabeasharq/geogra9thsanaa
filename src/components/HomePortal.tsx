@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ALL_LESSONS,
   ATLAS_LOCATIONS,
@@ -22,9 +22,15 @@ import {
   PenTool,
   Phone,
   Target,
-  SlidersHorizontal
+  SlidersHorizontal,
+  ExternalLink,
+  Copy,
+  Check
 } from 'lucide-react';
 import { PWAOfflineStatusCard } from './PWAInstallButton';
+
+const VERCEL_APP_URL = 'https://geogra9thsanaa.vercel.app';
+const MAJDI_TELEGRAM_URL = 'https://t.me/majdinofani';
 
 interface HomePortalProps {
   progress: StudentProgress;
@@ -49,6 +55,19 @@ export const HomePortal: React.FC<HomePortalProps> = ({
   onOpenTraining,
   onOpenSearch
 }) => {
+  const [copiedAppLink, setCopiedAppLink] = useState(false);
+
+  const appShareUrl = VERCEL_APP_URL;
+
+  const handleCopyAppLink = () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      void navigator.clipboard.writeText(appShareUrl).then(() => {
+        setCopiedAppLink(true);
+        window.setTimeout(() => setCopiedAppLink(false), 2000);
+      }).catch(() => undefined);
+    }
+  };
+
   const lastLesson = getLessonById(progress.lastLocation.lessonId) ?? ALL_LESSONS[0];
   const lastUnit = getUnitById(progress.lastLocation.unitId) ?? TEXTBOOK_UNITS[0];
   const lessonLocations = useMemo(() => getLocationsForLesson(lastLesson.id), [lastLesson.id]);
@@ -152,7 +171,84 @@ export const HomePortal: React.FC<HomePortalProps> = ({
   ];
 
   return (
-    <main className="mx-auto max-w-[1400px] space-y-8 px-4 py-6 sm:px-6 sm:py-8">
+    <main className="mx-auto max-w-[1400px] space-y-6 px-4 py-5 sm:space-y-8 sm:px-6 sm:py-8">
+      {/* Fast-Scan Top Credit & Notes Strip */}
+      <section
+        aria-label="إعداد ومراجعة التطبيق والملاحظات"
+        className="rounded-xl border border-slate-200 bg-white px-4 py-3 sm:px-5"
+      >
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-6">
+          <div className="min-w-0 space-y-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-semibold text-sky-700">
+              <span>إعداد التطبيق والملاحظات والتواصل:</span>
+              <a
+                href="tel:779424090"
+                dir="ltr"
+                className="inline-flex items-center gap-1 font-mono font-bold tabular-nums text-slate-800 hover:text-sky-700 hover:underline"
+              >
+                <Phone className="h-3 w-3 text-emerald-600" />
+                <span>779424090</span>
+              </a>
+            </div>
+            <div className="text-xs font-extrabold text-slate-900 sm:text-sm">
+              الأستاذ إبراهيم أحمد متاش
+            </div>
+            <div className="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-600">
+              <span className="shrink-0 font-medium text-slate-500">رابط التطبيق:</span>
+              <a
+                href={appShareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                dir="ltr"
+                className="min-w-0 flex-1 truncate font-mono text-[11px] text-sky-700 hover:underline"
+                title={appShareUrl}
+              >
+                {appShareUrl}
+              </a>
+              <button
+                type="button"
+                onClick={handleCopyAppLink}
+                className="inline-flex shrink-0 items-center gap-1 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                {copiedAppLink ? (
+                  <>
+                    <Check className="h-3 w-3 text-emerald-600" />
+                    <span className="text-emerald-700">تم النسخ</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3 w-3" />
+                    <span>نسخ</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="min-w-0 space-y-1 border-t border-slate-100 pt-2.5 sm:border-t-0 sm:border-r sm:pt-0 sm:pr-5">
+            <div className="text-[11px] font-semibold text-emerald-700">
+              مراجع التطبيق والمحتوى والملاحظات العلمية:
+            </div>
+            <div className="text-xs font-extrabold text-slate-900 sm:text-sm">
+              الأستاذ مجدي محمد النوفاني
+            </div>
+            <div className="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-600">
+              <span className="shrink-0 font-medium text-slate-500">قناة التليجرام:</span>
+              <a
+                href={MAJDI_TELEGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                dir="ltr"
+                className="inline-flex min-w-0 items-center gap-1 font-mono text-[11px] font-semibold text-emerald-700 hover:underline"
+              >
+                <span className="truncate">{MAJDI_TELEGRAM_URL}</span>
+                <ExternalLink className="h-3 w-3 shrink-0" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Hero Split Section */}
       <section className="grid items-stretch gap-6 lg:grid-cols-12">
         <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 lg:col-span-7">
@@ -543,40 +639,6 @@ export const HomePortal: React.FC<HomePortalProps> = ({
             );
           })}
         </div>
-      </section>
-
-      {/* Author, Reviewer & Support Credit Strip */}
-      <section className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5">
-        <div className="grid gap-4 sm:grid-cols-2 sm:gap-8">
-          <div>
-            <div className="text-xs font-semibold text-sky-700">التواصل والدعم التربوي والتقني</div>
-            <div className="font-display mt-1 text-base font-bold text-slate-900">
-              الأستاذ إبراهيم أحمد متاش
-            </div>
-            <p className="mt-0.5 text-xs text-slate-600">
-              للتواصل والاستفسارات التربوية والدعم الفني الخاص بالكتاب التفاعلي للصف التاسع الأساسي
-            </p>
-          </div>
-
-          <div className="border-slate-100 sm:border-r sm:pr-6">
-            <div className="text-xs font-semibold text-emerald-700">المراجعة والتدقيق</div>
-            <div className="font-display mt-1 text-base font-bold text-slate-900">
-              الأستاذ مجدي محمد النوفاني
-            </div>
-            <p className="mt-0.5 text-xs text-slate-600">
-              مراجع المحتوى التعليمي والجغرافي للكتاب التفاعلي
-            </p>
-          </div>
-        </div>
-
-        <a
-          href="tel:779424090"
-          dir="ltr"
-          className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 font-mono text-sm font-bold tabular-nums text-white hover:bg-slate-800"
-        >
-          <Phone className="h-4 w-4 text-emerald-400" />
-          <span>779424090</span>
-        </a>
       </section>
     </main>
   );
