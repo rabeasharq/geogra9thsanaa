@@ -277,14 +277,16 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setReaderModalOpen(true)}
-              className="inline-flex min-h-[40px] shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-sky-200 bg-sky-50 px-3.5 py-2 text-xs font-semibold text-sky-900 transition-colors hover:bg-sky-100"
-            >
-              <Maximize2 className="h-4 w-4" />
-              <span>قراءة الملزمة في نافذة</span>
-            </button>
+            {activeTab !== 'booklet' && (
+              <button
+                type="button"
+                onClick={() => setReaderModalOpen(true)}
+                className="inline-flex min-h-[40px] shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-sky-200 bg-sky-50 px-3.5 py-2 text-xs font-semibold text-sky-900 transition-colors hover:bg-sky-100"
+              >
+                <Maximize2 className="h-4 w-4" />
+                <span>قراءة بملء الشاشة</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -958,10 +960,10 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
                 <button
                   type="button"
                   onClick={() => setReaderModalOpen(true)}
-                  className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-sky-300 bg-white px-3.5 py-2 text-xs font-semibold text-sky-900 hover:bg-sky-100"
+                  className="inline-flex min-h-[38px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-sky-300 bg-white px-3.5 py-2 text-xs font-semibold text-sky-900 hover:bg-sky-100"
                 >
                   <Maximize2 className="h-3.5 w-3.5 text-sky-700" />
-                  <span>نافذة قراءة داخل التطبيق</span>
+                  <span>قراءة بملء الشاشة</span>
                 </button>
                 <button
                   type="button"

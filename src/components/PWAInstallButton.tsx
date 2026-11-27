@@ -233,39 +233,69 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({ compact = fa
   );
 };
 
+const PWA_CARD_DISMISSED_KEY = 'yemen_geo9_pwa_strip_dismissed_v1';
+
 export const PWAOfflineStatusCard: React.FC = () => {
   const { isInstalled, isInstallable, offlineReady, swRegistered } = usePWAInstall();
   const isOnline = useOnlineStatus();
+  const [dismissed, setDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(PWA_CARD_DISMISSED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  // Hide completely once installed as standalone app or dismissed by the user
+  if (isInstalled || dismissed) {
+    return null;
+  }
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    try {
+      localStorage.setItem(PWA_CARD_DISMISSED_KEY, '1');
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
+  const statusText = offlineReady
+    ? 'الكتاب والأطلس محفوظان محلياً للعمل بدون إنترنت.'
+    : swRegistered
+    ? 'جارٍ استكمال حفظ ملفات التطبيق للعمل بدون إنترنت.'
+    : 'تطبيق ويب قابل للتثبيت للعمل بدون إنترنت.';
 
   return (
     <section
       aria-label="حالة التثبيت والعمل بدون إنترنت"
-      className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-emerald-200 bg-emerald-50/60 p-5"
+      className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-2.5 sm:flex-nowrap sm:px-4"
     >
-      <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
-          <CheckCircle2 className="h-5 w-5" />
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
+          <CheckCircle2 className="h-4 w-4" />
         </span>
-        <div>
-          <h3 className="font-display text-sm font-bold text-slate-900 sm:text-base">
-            {isInstalled
-              ? 'التطبيق مثبّت في جهازك ويعمل كتطبيق مستقل بدون إنترنت'
-              : isInstallable
-              ? 'التطبيق جاهز للتثبيت المباشر في قائمة التطبيقات (يعمل بدون نت)'
-              : 'تطبيق ويب مفعّل للتثبيت في قائمة التطبيقات والعمل بدون إنترنت'}
-          </h3>
-          <p className="mt-1 text-xs leading-relaxed text-slate-700">
-            {offlineReady
-              ? 'تم تفعيل بيان التطبيق (Manifest) والعامل الخدمي (Service Worker) وحفظ الوحدات الـ 18 والأطلس وقسم رسم الخرائط والتدريبات محلياً للعمل بدون نت.'
-              : swRegistered
-              ? 'تم تسجيل العامل الخدمي بنجاح وجارٍ استكمال حفظ جميع ملفات الكتاب والأطلس للعمل بدون اتصال.'
-              : 'جارٍ تهيئة ملفات التطبيق والأطلس في الذاكرة المحلية ليعمل بدون إنترنت بعد التثبيت.'}
-            {!isOnline && ' (أنت تتصفح الآن في وضع عدم الاتصال بالإنترنت).'}
-          </p>
-        </div>
+        <p className="min-w-0 text-xs font-medium leading-snug text-slate-800 sm:truncate">
+          <strong className="font-bold text-slate-900">
+            {isInstallable ? 'جاهز للتثبيت بدون نت: ' : 'جاهز بدون إنترنت: '}
+          </strong>
+          <span>{statusText}</span>
+          {!isOnline && <span className="font-semibold text-amber-800"> (غير متصل حالياً)</span>}
+        </p>
       </div>
 
-      {!isInstalled && <PWAInstallButton />}
+      <div className="flex shrink-0 items-center gap-1.5">
+        <PWAInstallButton compact />
+        <button
+          type="button"
+          onClick={handleDismiss}
+          aria-label="إخفاء إشعار العمل بدون نت"
+          title="إخفاء"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-emerald-100 hover:text-slate-800"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
     </section>
   );
 };
@@ -278,10 +308,12 @@ export const OfflineIndicator: React.FC = () => {
   return (
     <div
       role="status"
-      className="no-print fixed bottom-20 left-4 z-50 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-600 px-3.5 py-2 text-xs font-semibold text-white shadow-lg lg:bottom-4"
+      className="no-print border-b border-amber-200 bg-amber-50 px-3 py-1.5 text-center text-xs font-semibold text-amber-950"
     >
-      <WifiOff className="h-4 w-4 shrink-0" />
-      <span>وضع عدم الاتصال — جميع الدروس والأطلس تعمل بدون نت</span>
+      <span className="inline-flex items-center justify-center gap-1.5">
+        <WifiOff className="h-3.5 w-3.5 shrink-0 text-amber-700" />
+        <span>وضع عدم الاتصال — جميع الدروس والأطلس والملزمة تعمل محلياً بدون نت</span>
+      </span>
     </div>
   );
 };

@@ -266,6 +266,43 @@ html[data-theme="night"] ::-webkit-scrollbar-thumb {
   display: none;
 }
 
+/* Proportional zoom scaling inside BookletReaderModal (em-based so Tailwind rem utilities scale together) */
+.booklet-reader-sheet {
+  font-size: calc(1rem * var(--booklet-scale, 1));
+}
+.booklet-reader-sheet .text-\[10px\] {
+  font-size: 0.625em;
+  line-height: 1.45;
+}
+.booklet-reader-sheet .text-\[11px\] {
+  font-size: 0.6875em;
+  line-height: 1.5;
+}
+.booklet-reader-sheet .text-xs {
+  font-size: 0.75em;
+  line-height: 1.55;
+}
+.booklet-reader-sheet .text-sm {
+  font-size: 0.875em;
+  line-height: 1.6;
+}
+.booklet-reader-sheet .text-base {
+  font-size: 1em;
+  line-height: 1.55;
+}
+.booklet-reader-sheet .text-lg {
+  font-size: 1.125em;
+  line-height: 1.45;
+}
+.booklet-reader-sheet .text-xl {
+  font-size: 1.25em;
+  line-height: 1.4;
+}
+.booklet-reader-sheet .text-2xl {
+  font-size: 1.5em;
+  line-height: 1.3;
+}
+
 /* Print stylesheet for Study Guide A4 Booklet PDF Export */
 @media print {
   @page {

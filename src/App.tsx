@@ -318,6 +318,8 @@ export default function App() {
         onResetDisplayPrefs={resetPrefs}
       />
 
+      <OfflineIndicator />
+
       <BreadcrumbBar
         portal={activePortal}
         unitTitle={breadcrumbUnit}
@@ -536,8 +538,6 @@ export default function App() {
         onRemoveBookmark={(bm) => toggleBookmark(bm)}
         onResetProgress={resetProgress}
       />
-
-      <OfflineIndicator />
 
       {/* Hidden Owner-Only Detailed User Analytics Modal */}
       {telemetry.isAdmin && telemetry.adminBreakdown && (

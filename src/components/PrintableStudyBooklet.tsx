@@ -227,12 +227,12 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
       </div>
 
       {/* ==================== PAGE 1: OFFICIAL COVER & TABLE OF CONTENTS ==================== */}
-      <section className="print-break-after rounded-xl border-2 border-slate-300 bg-white p-6">
+      <section className="print-break-after rounded-xl border-2 border-slate-300 bg-white p-4 sm:p-6">
         <div className="border-b border-slate-200 pb-4 text-center">
           <div className="text-xs font-bold text-sky-800">
             الجمهورية اليمنية · الصف التاسع الأساسي · المرجع الرسمي: {BOOK_FRONT_MATTER.sourceEdition}
           </div>
-          <h1 className="font-display mt-2 text-2xl font-extrabold text-slate-900">
+          <h1 className="font-display mt-2 text-xl font-extrabold text-slate-900 sm:text-2xl">
             الملزمة الشاملة الميسّرة في جغرافية الجمهورية اليمنية والوطن العربي
           </h1>
           <p className="mt-1 text-sm font-semibold text-amber-800">{scopeHeadline}</p>
@@ -242,8 +242,8 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
         </div>
 
         {/* Author & Reviewer Official Attribution Box */}
-        <div className="mt-4 grid grid-cols-2 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <div className="border-l border-slate-200 pl-3">
+        <div className="mt-4 grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 print:grid-cols-2">
+          <div className="border-b border-slate-200 pb-3 sm:border-b-0 sm:border-l sm:pb-0 sm:pl-3 print:border-b-0 print:border-l print:pb-0 print:pl-3">
             <div className="text-xs font-semibold text-sky-800">إعداد وتصميم المحتوى</div>
             <div className="font-display mt-1 text-base font-extrabold text-slate-900">
               الأستاذ إبراهيم أحمد متاش
@@ -267,7 +267,7 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
         </div>
 
         {/* Booklet Scope Metrics */}
-        <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+        <div className="mt-4 grid grid-cols-1 gap-3 text-center sm:grid-cols-3 print:grid-cols-3">
           <div className="rounded-lg border border-slate-200 bg-white p-3">
             <div className="text-xs text-slate-500">الوحدات والدروس</div>
             <div className="mt-1 font-mono text-base font-extrabold tabular-nums text-slate-900">
@@ -294,7 +294,7 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
           <h2 className="font-display border-b border-slate-200 pb-2 text-base font-bold text-slate-900">
             فهرس محتويات الملزمة وخريطة المذاكرة
           </h2>
-          <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 print:grid-cols-2">
             {unitsToRender.map((u) => {
               const uMaps = TEXTBOOK_MAP_TEMPLATES.filter((m) => m.unitId === u.id);
               const uTables = MINISTERIAL_COMPARATIVE_TABLES.filter((t) => t.unitId === u.id);
@@ -392,7 +392,7 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
                           <div className="mb-1.5 text-xs font-bold text-sky-900">
                             الأرقام والمؤشرات القياسية للدرس:
                           </div>
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                          <div className="grid grid-cols-1 gap-x-4 gap-y-1.5 text-xs sm:grid-cols-2 print:grid-cols-2">
                             {lesson.keyFacts.map((kf, idx) => (
                               <div key={idx}>
                                 <span className="text-slate-600">• {kf.label}: </span>
@@ -439,7 +439,7 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
                           <div className="mb-1.5 text-xs font-bold text-emerald-900">
                             المفاهيم والمصطلحات المقررة:
                           </div>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 print:grid-cols-2">
                             {lesson.concepts.map((c) => (
                               <div
                                 key={c.id}
@@ -490,28 +490,30 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
                             {tbl.title}{' '}
                             <span className="font-mono font-normal text-slate-500">({tbl.pageRef})</span>
                           </div>
-                          <table className="w-full text-right text-xs">
-                            <thead className="bg-slate-50 text-slate-700">
-                              <tr>
-                                {tbl.headers.map((h, i) => (
-                                  <th key={i} className="border-b border-slate-200 px-3 py-2 font-semibold">
-                                    {h}
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                              {tbl.rows.map((r, rIdx) => (
-                                <tr key={rIdx}>
-                                  {r.map((cell, cIdx) => (
-                                    <td key={cIdx} className="px-3 py-1.5 text-slate-800">
-                                      {cell}
-                                    </td>
+                          <div className="overflow-x-auto print:overflow-visible">
+                            <table className="w-full text-right text-xs">
+                              <thead className="bg-slate-50 text-slate-700">
+                                <tr>
+                                  {tbl.headers.map((h, i) => (
+                                    <th key={i} className="border-b border-slate-200 px-3 py-2 font-semibold">
+                                      {h}
+                                    </th>
                                   ))}
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                {tbl.rows.map((r, rIdx) => (
+                                  <tr key={rIdx}>
+                                    {r.map((cell, cIdx) => (
+                                      <td key={cIdx} className="px-3 py-1.5 text-slate-800">
+                                        {cell}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       ))}
                     </article>
@@ -569,39 +571,41 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
                     </div>
 
                     {/* Crisp Landmark Index Table so text never crowds the map */}
-                    <table className="w-full text-right text-xs">
-                      <thead className="bg-slate-50 text-slate-700">
-                        <tr>
-                          <th className="border-b border-slate-200 px-2.5 py-1.5 font-semibold">#</th>
-                          <th className="border-b border-slate-200 px-2.5 py-1.5 font-semibold">المعلم على الخريطة</th>
-                          <th className="border-b border-slate-200 px-2.5 py-1.5 font-semibold">التصنيف</th>
-                          <th className="border-b border-slate-200 px-2.5 py-1.5 font-semibold">الدلالة المنهجية</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {mapTpl.features.map((feat, idx) => (
-                          <tr key={feat.id}>
-                            <td className="px-2.5 py-1.5 font-mono font-bold tabular-nums">{idx + 1}</td>
-                            <td className="px-2.5 py-1.5 font-bold text-slate-900">{feat.label}</td>
-                            <td className="px-2.5 py-1.5 text-slate-600">{feat.category}</td>
-                            <td className="px-2.5 py-1.5 text-slate-800">{feat.detail}</td>
+                    <div className="overflow-x-auto rounded-lg border border-slate-100 print:overflow-visible print:border-0">
+                      <table className="w-full text-right text-xs">
+                        <thead className="bg-slate-50 text-slate-700">
+                          <tr>
+                            <th className="border-b border-slate-200 px-2.5 py-1.5 font-semibold">#</th>
+                            <th className="border-b border-slate-200 px-2.5 py-1.5 font-semibold">المعلم على الخريطة</th>
+                            <th className="border-b border-slate-200 px-2.5 py-1.5 font-semibold">التصنيف</th>
+                            <th className="border-b border-slate-200 px-2.5 py-1.5 font-semibold">الدلالة المنهجية</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {mapTpl.features.map((feat, idx) => (
+                            <tr key={feat.id}>
+                              <td className="px-2.5 py-1.5 font-mono font-bold tabular-nums">{idx + 1}</td>
+                              <td className="px-2.5 py-1.5 font-bold text-slate-900">{feat.label}</td>
+                              <td className="px-2.5 py-1.5 text-slate-600">{feat.category}</td>
+                              <td className="px-2.5 py-1.5 text-slate-800">{feat.detail}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
 
                     {/* Blank Practice Map for Pen-and-Paper Offline Revision */}
                     {includeBlankMaps && (
                       <div className="print-break-inside-avoid mt-3 rounded-lg border border-slate-300 bg-slate-50 p-3">
-                        <div className="mb-2 flex items-center justify-between text-xs font-bold text-slate-900">
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-900">
                           <span>تمرين خريطة صماء (اكتب اسم كل رقم بالقلم ثم راجع الملحق الختامي):</span>
                           <span className="font-mono text-slate-500">{mapTpl.features.length} مواضع</span>
                         </div>
-                        <div className="grid grid-cols-2 items-start gap-3">
+                        <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-2 print:grid-cols-2">
                           <div>
                             <BlankPracticeMapSvg template={mapTpl} />
                           </div>
-                          <div className="grid grid-cols-2 gap-x-3 gap-y-2 pt-1 text-xs">
+                          <div className="grid grid-cols-1 gap-x-3 gap-y-2 pt-1 text-xs sm:grid-cols-2 print:grid-cols-2">
                             {mapTpl.features.map((feat, idx) => (
                               <div key={feat.id} className="border-b border-dashed border-slate-400 pb-1">
                                 <span className="font-mono font-bold tabular-nums text-slate-900">
@@ -637,28 +641,30 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
                         {ct.pageRef} · وزاري: {ct.ministerialSlots}
                       </div>
                     </div>
-                    <table className="w-full text-right text-xs">
-                      <thead className="bg-slate-50 text-slate-700">
-                        <tr>
-                          {ct.headers.map((h, i) => (
-                            <th key={i} className="border-b border-slate-200 px-3 py-2 font-semibold">
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {ct.rows.map((row, rIdx) => (
-                          <tr key={rIdx}>
-                            {row.map((cell, cIdx) => (
-                              <td key={cIdx} className="px-3 py-1.5 text-slate-800">
-                                {cell}
-                              </td>
+                    <div className="overflow-x-auto print:overflow-visible">
+                      <table className="w-full text-right text-xs">
+                        <thead className="bg-slate-50 text-slate-700">
+                          <tr>
+                            {ct.headers.map((h, i) => (
+                              <th key={i} className="border-b border-slate-200 px-3 py-2 font-semibold">
+                                {h}
+                              </th>
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {ct.rows.map((row, rIdx) => (
+                            <tr key={rIdx}>
+                              {row.map((cell, cIdx) => (
+                                <td key={cIdx} className="px-3 py-1.5 text-slate-800">
+                                  {cell}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                     <div className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-800">
                       <strong>مفتاح التركيز الوزاري: </strong>
                       {ct.focusTip}
@@ -674,7 +680,7 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
                 <h3 className="font-display border-b-2 border-indigo-200 pb-2 text-base font-extrabold text-indigo-900">
                   احذر الخلط الوزاري: التخيير والتمييز بين المتشابهات ({unitDisambigs.length} محاور)
                 </h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 print:grid-cols-2">
                   {unitDisambigs.map((d) => (
                     <div
                       key={d.id}
@@ -701,7 +707,7 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
                 <h3 className="font-display text-sm font-extrabold text-slate-900">
                   {unitMindmap.title}
                 </h3>
-                <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-3">
                   {unitMindmap.steps.map((node, i) => (
                     <div key={i} className="rounded-lg border border-slate-200 bg-white p-2.5 text-xs">
                       <div className="font-bold text-sky-800">
@@ -770,30 +776,32 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
               <div className="border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-900">
                 أولاً: مفاتيح إجابات الأسئلة التدريبية ({allPaperQuestions.length} سؤالاً)
               </div>
-              <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50 text-slate-700">
-                  <tr>
-                    <th className="border-b border-slate-200 px-3 py-2 font-semibold">السؤال</th>
-                    <th className="border-b border-slate-200 px-3 py-2 font-semibold">الوحدة</th>
-                    <th className="border-b border-slate-200 px-3 py-2 font-semibold">الإجابة الصحيحة</th>
-                    <th className="border-b border-slate-200 px-3 py-2 font-semibold">التعليل والصفحة</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {allPaperQuestions.map((item) => (
-                    <tr key={item.question.id}>
-                      <td className="px-3 py-1.5 font-mono font-bold tabular-nums">س{item.number}</td>
-                      <td className="px-3 py-1.5 font-mono">و{item.unitNumber}</td>
-                      <td className="px-3 py-1.5 font-bold text-emerald-900">
-                        {item.question.correctAnswer}
-                      </td>
-                      <td className="px-3 py-1.5 text-slate-700">
-                        {item.question.explanation} ({item.question.pageRef})
-                      </td>
+              <div className="overflow-x-auto print:overflow-visible">
+                <table className="w-full text-right text-xs">
+                  <thead className="bg-slate-50 text-slate-700">
+                    <tr>
+                      <th className="border-b border-slate-200 px-3 py-2 font-semibold">السؤال</th>
+                      <th className="border-b border-slate-200 px-3 py-2 font-semibold">الوحدة</th>
+                      <th className="border-b border-slate-200 px-3 py-2 font-semibold">الإجابة الصحيحة</th>
+                      <th className="border-b border-slate-200 px-3 py-2 font-semibold">التعليل والصفحة</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {allPaperQuestions.map((item) => (
+                      <tr key={item.question.id}>
+                        <td className="px-3 py-1.5 font-mono font-bold tabular-nums">س{item.number}</td>
+                        <td className="px-3 py-1.5 font-mono">و{item.unitNumber}</td>
+                        <td className="px-3 py-1.5 font-bold text-emerald-900">
+                          {item.question.correctAnswer}
+                        </td>
+                        <td className="px-3 py-1.5 text-slate-700">
+                          {item.question.explanation} ({item.question.pageRef})
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -802,14 +810,14 @@ export const PrintableStudyBooklet: React.FC<PrintableStudyBookletProps> = ({
               <div className="font-display text-sm font-bold text-slate-900">
                 ثانياً: مفاتيح أرقام الخرائط الصماء ({includedMaps.length} خرائط)
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 print:grid-cols-2">
                 {includedMaps.map((m) => (
                   <div
                     key={m.id}
                     className="print-break-inside-avoid rounded-lg border border-slate-200 bg-white p-3 text-xs"
                   >
                     <div className="font-bold text-sky-900">{m.title}</div>
-                    <ol className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-slate-800">
+                    <ol className="mt-1.5 grid grid-cols-1 gap-x-3 gap-y-1 text-slate-800 sm:grid-cols-2 print:grid-cols-2">
                       {m.features.map((feat, idx) => (
                         <li key={feat.id}>
                           <strong className="font-mono tabular-nums">{idx + 1}.</strong>{' '}
