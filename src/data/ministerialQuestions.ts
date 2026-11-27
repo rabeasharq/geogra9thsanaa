@@ -2209,10 +2209,8 @@ export const MINISTERIAL_QUESTIONS: QuizQuestion[] = [
     explanation: 'وادي حضرموت (والمسيلة) أكبر وادٍ في شرق اليمن ويمتد في الهضبة الشرقية نحو البحر العربي (ص 26).',
     relatedLocationId: 'loc-hadramout-plateau',
     mapVisual: {
-      kind: 'yemen-pipeline',
+      kind: 'yemen-point',
       point1: { lat: 15.9, lng: 48.8 },
-      point2: { lat: 15.5, lng: 45.8 },
-      pipelineEnd: { lat: 15.2, lng: 42.68 },
       activePoint: 1
     }
   },

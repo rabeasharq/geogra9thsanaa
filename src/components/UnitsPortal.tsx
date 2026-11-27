@@ -1024,6 +1024,14 @@ export const UnitsPortal: React.FC<UnitsPortalProps> = ({
                         </div>
                       </div>
                       <p className="mt-1.5 text-xs leading-relaxed text-slate-700">{c.definition}</p>
+                      {c.enrichmentNote && (
+                        <div className="mt-2 rounded-md border border-amber-200 bg-amber-50/90 px-2.5 py-1.5 text-[11px] leading-relaxed text-amber-950">
+                          <span className="ml-1.5 inline-block rounded bg-amber-200/80 px-1.5 py-0.5 text-[10px] font-extrabold text-amber-900">
+                            إثراء
+                          </span>
+                          <span>{c.enrichmentNote}</span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

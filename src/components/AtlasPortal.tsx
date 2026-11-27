@@ -679,6 +679,18 @@ export const YemenSvgMap: React.FC<{
         <filter id="yemenLandShadow" x="-5%" y="-5%" width="110%" height="110%">
           <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#0c4a6e" floodOpacity="0.25" />
         </filter>
+
+        <marker
+          id="wadiArrow"
+          viewBox="0 0 10 10"
+          refX="7"
+          refY="5"
+          markerWidth="5.5"
+          markerHeight="5.5"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#0369a1" />
+        </marker>
       </defs>
 
       {/* Ocean Base */}
@@ -783,13 +795,142 @@ export const YemenSvgMap: React.FC<{
         </g>
       )}
 
-      {/* Wadis & Surface Water Vectors */}
+      {/* Wadis & Surface Water Vectors (4 Directions: West, South, East, North) */}
       {showWater && (
-        <g stroke="#0369a1" strokeWidth="2.3" fill="none" strokeLinecap="round">
-          <path d="M 205,288 Q 170,304 138,314" />
-          <path d="M 212,358 Q 175,374 150,384" />
-          <path d="M 480,275 Q 542,282 595,318" />
-          <path d="M 248,300 Q 285,302 315,295" />
+        <g>
+          {[
+            {
+              id: 'w-harad-mawr',
+              label: 'حرض ومور (غرباً)',
+              pts: [
+                [15.85, 43.9],
+                [15.72, 43.35],
+                [15.65, 42.85]
+              ] as [number, number][],
+              lx: 15.8,
+              ly: 43.25,
+              dy: -8
+            },
+            {
+              id: 'w-surdud-siham',
+              label: 'سردد وسهام',
+              pts: [
+                [15.15, 43.92],
+                [14.98, 43.48],
+                [14.85, 42.98]
+              ] as [number, number][],
+              lx: 15.05,
+              ly: 43.35,
+              dy: -7
+            },
+            {
+              id: 'w-zabid-rima',
+              label: 'رماع وزبيد',
+              pts: [
+                [14.35, 44.08],
+                [14.22, 43.6],
+                [14.1, 43.12]
+              ] as [number, number][],
+              lx: 14.15,
+              ly: 43.45,
+              dy: 13
+            },
+            {
+              id: 'w-tuban-rajaa',
+              label: 'تبن والرجاع (جنوباً)',
+              pts: [
+                [13.78, 44.52],
+                [13.38, 44.68],
+                [12.92, 44.88]
+              ] as [number, number][],
+              lx: 13.32,
+              ly: 44.55,
+              dy: 12
+            },
+            {
+              id: 'w-bana-ahwar',
+              label: 'بنا وأحور',
+              pts: [
+                [14.08, 44.95],
+                [13.65, 45.28],
+                [13.18, 45.46]
+              ] as [number, number][],
+              lx: 13.6,
+              ly: 45.55,
+              dy: 6
+            },
+            {
+              id: 'w-hadramout-masilah',
+              label: 'حضرموت / المسيلة (جنوباً شرقاً)',
+              pts: [
+                [15.68, 47.9],
+                [15.94, 48.95],
+                [15.72, 50.2],
+                [15.18, 51.12]
+              ] as [number, number][],
+              lx: 15.98,
+              ly: 49.45,
+              dy: -10
+            },
+            {
+              id: 'w-adhanah-marib',
+              label: 'أذنة وبيحان وجردان (شرقاً)',
+              pts: [
+                [14.95, 44.55],
+                [15.38, 45.22],
+                [15.55, 45.85]
+              ] as [number, number][],
+              lx: 15.22,
+              ly: 45.85,
+              dy: 14
+            },
+            {
+              id: 'w-jawf-kharid',
+              label: 'الجوف والخارد (شمالاً)',
+              pts: [
+                [15.72, 44.32],
+                [16.12, 44.88],
+                [16.45, 45.48]
+              ] as [number, number][],
+              lx: 16.42,
+              ly: 45.05,
+              dy: -10
+            }
+          ].map((w) => {
+            const d = w.pts
+              .map(([la, ln], i) => {
+                const pt = projectYemen(la, ln);
+                return `${i === 0 ? 'M' : 'L'} ${pt.x},${pt.y}`;
+              })
+              .join(' ');
+            const lp = projectYemen(w.lx, w.ly);
+            return (
+              <g key={w.id}>
+                <path
+                  d={d}
+                  stroke="#0284c7"
+                  strokeWidth="2.4"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  markerEnd="url(#wadiArrow)"
+                />
+                <text
+                  x={lp.x}
+                  y={lp.y + w.dy}
+                  textAnchor="middle"
+                  fill="#0c4a6e"
+                  fontSize="9.5"
+                  fontWeight="800"
+                  stroke="#ffffff"
+                  strokeWidth="3"
+                  paintOrder="stroke"
+                >
+                  {w.label}
+                </text>
+              </g>
+            );
+          })}
         </g>
       )}
 

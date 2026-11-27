@@ -61,6 +61,7 @@ export interface ConceptTerm {
   id: string;
   term: string;
   definition: string;
+  enrichmentNote?: string;
   unitId: string;
   lessonId: string;
   pageRef: string;

@@ -496,6 +496,14 @@ export const StudyGuidePortal: React.FC<StudyGuidePortalProps> = ({
                     <span className="font-mono text-xs text-slate-500">{c.pageRef}</span>
                   </div>
                   <p className="mt-2 text-sm leading-relaxed text-slate-700">{c.definition}</p>
+                  {c.enrichmentNote && (
+                    <div className="mt-2.5 rounded-md border border-amber-200 bg-amber-50/90 px-3 py-2 text-xs leading-relaxed text-amber-950">
+                      <span className="ml-1.5 inline-block rounded bg-amber-200/80 px-1.5 py-0.5 text-[10px] font-extrabold text-amber-900">
+                        إثراء
+                      </span>
+                      <span>{c.enrichmentNote}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="no-print mt-3 flex items-center gap-3 border-t border-slate-200/70 pt-2.5 text-xs">
                   <button

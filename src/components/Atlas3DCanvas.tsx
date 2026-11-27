@@ -1011,20 +1011,38 @@ const FallbackRelief3D: React.FC<{
           <>
             <path d={polyToPath(YEMEN_MAINLAND_POLY)} fill="#65a30d" stroke="#dcfce7" strokeWidth="1.5" />
             <path d={polyToPath(SOCOTRA_POLY)} fill="#10b981" stroke="#dcfce7" strokeWidth="1.2" />
-            {YEMEN_WADIS.map((w) => (
-              <path
-                key={w.name}
-                d={w.pts
-                  .map(([la, ln], i) => {
-                    const p = toIso(la, ln);
-                    return `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)},${p.y.toFixed(1)}`;
-                  })
-                  .join(' ')}
-                fill="none"
-                stroke="#38bdf8"
-                strokeWidth="2"
-              />
-            ))}
+            {YEMEN_WADIS.map((w) => {
+              const mid = w.pts[Math.floor(w.pts.length / 2)];
+              const mp = toIso(mid[0], mid[1]);
+              return (
+                <g key={w.name}>
+                  <path
+                    d={w.pts
+                      .map(([la, ln], i) => {
+                        const p = toIso(la, ln);
+                        return `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+                      })
+                      .join(' ')}
+                    fill="none"
+                    stroke="#38bdf8"
+                    strokeWidth="2"
+                  />
+                  <text
+                    x={mp.x}
+                    y={mp.y - 4}
+                    textAnchor="middle"
+                    fill="#e0f2fe"
+                    fontSize="8.5"
+                    fontWeight="700"
+                    stroke="#0f172a"
+                    strokeWidth="2.5"
+                    paintOrder="stroke"
+                  >
+                    {w.name.replace('وادي ', '')}
+                  </text>
+                </g>
+              );
+            })}
           </>
         ) : (
           <>
