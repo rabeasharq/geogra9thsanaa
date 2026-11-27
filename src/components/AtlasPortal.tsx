@@ -934,55 +934,55 @@ export const YemenSvgMap: React.FC<{
         </g>
       )}
 
-      {/* Thematic SVG Legend Card (Population or Climate) */}
+      {/* Thematic SVG Legend Card (Population or Climate) — positioned in open southern sea away from Bab el-Mandeb & Socotra */}
       {showPopulation && (
-        <g transform="translate(22, 438)">
-          <rect width="230" height="106" rx="8" fill="#ffffff" fillOpacity="0.94" stroke="#9f1239" strokeWidth="1.4" />
-          <text x="216" y="21" textAnchor="end" fill="#0f172a" fontSize="11" fontWeight="800">
+        <g transform="translate(358, 442)" style={{ direction: 'rtl' }}>
+          <rect width="318" height="106" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#9f1239" strokeWidth="1.4" />
+          <text x="304" y="21" textAnchor="start" fill="#0f172a" fontSize="11" fontWeight="800">
             مفتاح الكثافة السكانية (ص 38–39)
           </text>
-          <rect x="196" y="34" width="16" height="12" rx="2" fill="#9f1239" opacity="0.82" />
-          <text x="188" y="44" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+          <rect x="290" y="34" width="14" height="12" rx="2" fill="#9f1239" opacity="0.82" />
+          <text x="282" y="44" textAnchor="start" fill="#1e293b" fontSize="9.6" fontWeight="700">
             عالية جداً (&gt;220 نسمة/كم²): تعز، صنعاء، إب، الحديدة
           </text>
-          <rect x="196" y="56" width="16" height="12" rx="2" fill="#fb923c" opacity="0.75" />
-          <text x="188" y="66" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+          <rect x="290" y="56" width="14" height="12" rx="2" fill="#fb923c" opacity="0.75" />
+          <text x="282" y="66" textAnchor="start" fill="#1e293b" fontSize="9.6" fontWeight="700">
             متوسطة (50–219 نسمة/كم²): الوسط والسواحل
           </text>
-          <rect x="196" y="78" width="16" height="12" rx="2" fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
-          <text x="188" y="88" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+          <rect x="290" y="78" width="14" height="12" rx="2" fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
+          <text x="282" y="88" textAnchor="start" fill="#1e293b" fontSize="9.6" fontWeight="700">
             منخفضة (1–49 نسمة/كم²): حضرموت، المهرة، مأرب
           </text>
         </g>
       )}
       {showClimate && (
-        <g transform="translate(22, 438)">
-          <rect width="222" height="108" rx="8" fill="#ffffff" fillOpacity="0.94" stroke="#065f46" strokeWidth="1.4" />
-          <text x="208" y="20" textAnchor="end" fill="#0f172a" fontSize="11" fontWeight="800">
+        <g transform="translate(382, 440)" style={{ direction: 'rtl' }}>
+          <rect width="272" height="108" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#065f46" strokeWidth="1.4" />
+          <text x="258" y="20" textAnchor="start" fill="#0f172a" fontSize="11" fontWeight="800">
             الأقاليم المناخية في اليمن (ص 19)
           </text>
-          <rect x="190" y="31" width="14" height="11" rx="2" fill="#f59e0b" opacity="0.75" />
-          <text x="182" y="40" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">الإقليم الساحلي (حار رطب صيفاً)</text>
-          <rect x="190" y="50" width="14" height="11" rx="2" fill="#84cc16" opacity="0.7" />
-          <text x="182" y="59" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">متوسط الارتفاع (400–1500م)</text>
-          <rect x="190" y="69" width="14" height="11" rx="2" fill="#059669" opacity="0.78" />
-          <text x="182" y="78" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">المرتفع (&gt;1500م: أمطار صيفية غزيرة)</text>
-          <rect x="190" y="88" width="14" height="11" rx="2" fill="#ea580c" opacity="0.6" />
-          <text x="182" y="97" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">الداخلي الصحراوي (جاف قاري)</text>
+          <rect x="244" y="31" width="14" height="11" rx="2" fill="#f59e0b" opacity="0.75" />
+          <text x="236" y="40" textAnchor="start" fill="#1e293b" fontSize="9.6" fontWeight="700">الإقليم الساحلي (حار رطب صيفاً)</text>
+          <rect x="244" y="50" width="14" height="11" rx="2" fill="#84cc16" opacity="0.7" />
+          <text x="236" y="59" textAnchor="start" fill="#1e293b" fontSize="9.6" fontWeight="700">متوسط الارتفاع (400–1500م)</text>
+          <rect x="244" y="69" width="14" height="11" rx="2" fill="#059669" opacity="0.78" />
+          <text x="236" y="78" textAnchor="start" fill="#1e293b" fontSize="9.6" fontWeight="700">المرتفع (&gt;1500م: أمطار صيفية غزيرة)</text>
+          <rect x="244" y="88" width="14" height="11" rx="2" fill="#ea580c" opacity="0.6" />
+          <text x="236" y="97" textAnchor="start" fill="#1e293b" fontSize="9.6" fontWeight="700">الداخلي الصحراوي (جاف قاري)</text>
         </g>
       )}
 
       {/* Maritime & Neighboring Country Labels */}
-      <text x="415" y="102" fill="#475569" fontSize="13.5" fontWeight="700">
+      <text x="515" y="102" textAnchor="middle" fill="#475569" fontSize="13.5" fontWeight="700">
         المملكة العربية السعودية (شمالاً)
       </text>
-      <text x="858" y="138" fill="#475569" fontSize="13" fontWeight="700">
+      <text x="858" y="138" textAnchor="middle" fill="#475569" fontSize="13" fontWeight="700">
         سلطنة عُمان
       </text>
-      <text x="64" y="218" fill="#075985" fontSize="13" fontWeight="800" transform="rotate(-70 64,218)">
+      <text x="64" y="218" textAnchor="middle" fill="#075985" fontSize="13" fontWeight="800" transform="rotate(-70 64,218)">
         البحر الأحمر
       </text>
-      <text x="455" y="545" fill="#f0f9ff" fontSize="14.5" fontWeight="800">
+      <text x="720" y="460" textAnchor="middle" fill="#f0f9ff" fontSize="13.5" fontWeight="800">
         خليج عدن والبحر العربي
       </text>
 
@@ -1020,18 +1020,18 @@ export const YemenSvgMap: React.FC<{
               strokeDasharray="7 5"
               opacity="0.85"
             />
-            <g transform="translate(22, 444)">
-              <rect width="236" height="84" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#be123c" strokeWidth="1.4" />
-              <text x="222" y="21" textAnchor="end" fill="#881337" fontSize="11" fontWeight="800">
+            <g transform="translate(380, 444)" style={{ direction: 'rtl' }}>
+              <rect width="276" height="84" rx="8" fill="#ffffff" fillOpacity="0.96" stroke="#be123c" strokeWidth="1.4" />
+              <text x="262" y="21" textAnchor="start" fill="#881337" fontSize="11" fontWeight="800">
                 خريطة الموقع الفلكي والجغرافي لليمن
               </text>
-              <text x="222" y="42" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+              <text x="262" y="42" textAnchor="start" fill="#1e293b" fontSize="9.8" fontWeight="700">
                 فلكياً: 12°–19° شمالاً | 41°–55° شرقاً
               </text>
-              <text x="222" y="60" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+              <text x="262" y="60" textAnchor="start" fill="#1e293b" fontSize="9.8" fontWeight="700">
                 المساحة: 555 ألف كم² · الساحل &gt; 2200 كم
               </text>
-              <text x="222" y="76" textAnchor="end" fill="#475569" fontSize="9.5" fontWeight="600">
+              <text x="262" y="76" textAnchor="start" fill="#475569" fontSize="9.4" fontWeight="600">
                 أكثر من 154 جزيرة في البحر الأحمر والعربي
               </text>
             </g>
@@ -1187,37 +1187,37 @@ export const ArabWorldSvgMap: React.FC<{
 
       {/* Thematic Map Legends for Arab World */}
       {showPopulation && (
-        <g transform="translate(36, 442)">
-          <rect width="265" height="106" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#9f1239" strokeWidth="1.4" />
-          <text x="252" y="21" textAnchor="end" fill="#0f172a" fontSize="11" fontWeight="800">
+        <g transform="translate(36, 442)" style={{ direction: 'rtl' }}>
+          <rect width="368" height="106" rx="8" fill="#ffffff" fillOpacity="0.96" stroke="#9f1239" strokeWidth="1.4" />
+          <text x="354" y="21" textAnchor="start" fill="#0f172a" fontSize="11" fontWeight="800">
             خريطة الكثافة السكانية العربية (ص 90)
           </text>
-          <rect x="234" y="34" width="16" height="12" rx="2" fill="#9f1239" opacity="0.82" />
-          <text x="226" y="44" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">
+          <rect x="338" y="34" width="16" height="12" rx="2" fill="#9f1239" opacity="0.82" />
+          <text x="330" y="44" textAnchor="start" fill="#1e293b" fontSize="9.5" fontWeight="700">
             عالية جداً وعالية: النيل، دجلة والفرات، سواحل الشام والمغرب، اليمن
           </text>
-          <rect x="234" y="56" width="16" height="12" rx="2" fill="#d9f99d" stroke="#65a30d" strokeWidth="1" />
-          <text x="226" y="66" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">
+          <rect x="338" y="56" width="16" height="12" rx="2" fill="#d9f99d" stroke="#65a30d" strokeWidth="1" />
+          <text x="330" y="66" textAnchor="start" fill="#1e293b" fontSize="9.5" fontWeight="700">
             متوسطة: الهضاب الساحلية وسفوح الجبال ومناطق الرعي
           </text>
-          <rect x="234" y="78" width="16" height="12" rx="2" fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
-          <text x="226" y="88" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">
+          <rect x="338" y="78" width="16" height="12" rx="2" fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
+          <text x="330" y="88" textAnchor="start" fill="#1e293b" fontSize="9.5" fontWeight="700">
             منخفضة ونادرة: الصحراء الكبرى والربع الخالي وبادية الشام
           </text>
         </g>
       )}
       {showClimate && (
-        <g transform="translate(36, 442)">
-          <rect width="250" height="106" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#065f46" strokeWidth="1.4" />
-          <text x="236" y="21" textAnchor="end" fill="#0f172a" fontSize="11" fontWeight="800">
+        <g transform="translate(36, 442)" style={{ direction: 'rtl' }}>
+          <rect width="324" height="106" rx="8" fill="#ffffff" fillOpacity="0.96" stroke="#065f46" strokeWidth="1.4" />
+          <text x="310" y="21" textAnchor="start" fill="#0f172a" fontSize="11" fontWeight="800">
             الأقاليم المناخية والنباتية (ص 73–75)
           </text>
-          <rect x="218" y="34" width="16" height="12" rx="2" fill="#15803d" opacity="0.7" />
-          <text x="210" y="44" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">البحر المتوسط (شمالاً · ممطر شتاءً · الأرز والإستبس)</text>
-          <rect x="218" y="56" width="16" height="12" rx="2" fill="#f59e0b" opacity="0.6" />
-          <text x="210" y="66" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">الصحراوي وشبه الصحراوي (الأوسع مساحةً · شوكية)</text>
-          <rect x="218" y="78" width="16" height="12" rx="2" fill="#10b981" opacity="0.72" />
-          <text x="210" y="88" textAnchor="end" fill="#1e293b" fontSize="9.8" fontWeight="700">المداري والاستوائي (جنوباً · ممطر صيفاً · السافانا)</text>
+          <rect x="294" y="34" width="16" height="12" rx="2" fill="#15803d" opacity="0.7" />
+          <text x="286" y="44" textAnchor="start" fill="#1e293b" fontSize="9.5" fontWeight="700">البحر المتوسط (شمالاً · ممطر شتاءً · الأرز والإستبس)</text>
+          <rect x="294" y="56" width="16" height="12" rx="2" fill="#f59e0b" opacity="0.6" />
+          <text x="286" y="66" textAnchor="start" fill="#1e293b" fontSize="9.5" fontWeight="700">الصحراوي وشبه الصحراوي (الأوسع مساحةً · شوكية)</text>
+          <rect x="294" y="78" width="16" height="12" rx="2" fill="#10b981" opacity="0.72" />
+          <text x="286" y="88" textAnchor="start" fill="#1e293b" fontSize="9.5" fontWeight="700">المداري والاستوائي (جنوباً · ممطر صيفاً · السافانا)</text>
         </g>
       )}
 
@@ -1260,32 +1260,32 @@ export const ArabWorldSvgMap: React.FC<{
               strokeDasharray="7 5"
               opacity="0.88"
             />
-            <text x={nw.x + 8} y={nw.y + 15} fill="#881337" fontSize="10.5" fontFamily="IBM Plex Mono" fontWeight="800">
+            <text x={nw.x + 8} y={nw.y + 15} style={{ direction: 'ltr' }} textAnchor="start" fill="#881337" fontSize="10.5" fontFamily="IBM Plex Mono" fontWeight="800">
               17°W · 37°30′N
             </text>
-            <text x={se.x - 8} y={nw.y + 15} textAnchor="end" fill="#881337" fontSize="10.5" fontFamily="IBM Plex Mono" fontWeight="800">
+            <text x={se.x - 8} y={nw.y + 15} style={{ direction: 'ltr' }} textAnchor="end" fill="#881337" fontSize="10.5" fontFamily="IBM Plex Mono" fontWeight="800">
               60°E
             </text>
-            <text x={nw.x + 8} y={se.y - 7} fill="#881337" fontSize="10.5" fontFamily="IBM Plex Mono" fontWeight="800">
+            <text x={nw.x + 8} y={se.y - 7} style={{ direction: 'ltr' }} textAnchor="start" fill="#881337" fontSize="10.5" fontFamily="IBM Plex Mono" fontWeight="800">
               2°S
             </text>
 
             {/* Geographic & Astronomical Location Legend Card */}
-            <g transform="translate(36, 444)">
-              <rect width="292" height="106" rx="8" fill="#ffffff" fillOpacity="0.96" stroke="#be123c" strokeWidth="1.5" />
-              <text x="278" y="21" textAnchor="end" fill="#881337" fontSize="11.2" fontWeight="800">
+            <g transform="translate(36, 444)" style={{ direction: 'rtl' }}>
+              <rect width="364" height="106" rx="8" fill="#ffffff" fillOpacity="0.96" stroke="#be123c" strokeWidth="1.5" />
+              <text x="350" y="21" textAnchor="start" fill="#881337" fontSize="11" fontWeight="800">
                 خريطة الموقع الفلكي والجغرافي للوطن العربي (ص 61–64)
               </text>
-              <text x="278" y="42" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+              <text x="350" y="42" textAnchor="start" fill="#1e293b" fontSize="9.8" fontWeight="700">
                 الفلكي: 60° شرقاً – 17° غرباً | 2° جنوباً – 37°30′ شمالاً
               </text>
-              <text x="278" y="60" textAnchor="end" fill="#1e293b" fontSize="10" fontWeight="700">
+              <text x="350" y="60" textAnchor="start" fill="#1e293b" fontSize="9.8" fontWeight="700">
                 المساحة: 13.3 مليون كم² (22 دولة · 71% أفريقي · 29% آسيوي)
               </text>
-              <text x="278" y="78" textAnchor="end" fill="#334155" fontSize="9.6" fontWeight="600">
+              <text x="350" y="78" textAnchor="start" fill="#334155" fontSize="9.4" fontWeight="600">
                 شمالاً: المتوسط وطوروس · جنوباً: الهندي والعربي والصحراء الكبرى
               </text>
-              <text x="278" y="95" textAnchor="end" fill="#334155" fontSize="9.6" fontWeight="600">
+              <text x="350" y="95" textAnchor="start" fill="#334155" fontSize="9.4" fontWeight="600">
                 شرقاً: زاجروس والخليج العربي وعمان · غرباً: المحيط الأطلسي
               </text>
             </g>
@@ -1294,21 +1294,21 @@ export const ArabWorldSvgMap: React.FC<{
       })()}
 
       {/* Comoros Inset Box */}
-      <g transform="translate(795, 442)">
-        <rect width="155" height="96" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#0369a1" strokeWidth="1.4" />
-        <text x="12" y="21" fill="#0f172a" fontSize="10.5" fontWeight="700">إطار جزر القمر (11°–13°S)</text>
-        <circle cx="62" cy="46" r="6" fill="#059669" />
-        <circle cx="84" cy="54" r="4.5" fill="#059669" />
+      <g transform="translate(790, 442)">
+        <rect width="166" height="96" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#0369a1" strokeWidth="1.4" />
+        <text x="83" y="21" textAnchor="middle" fill="#0f172a" fontSize="10" fontWeight="700">إطار جزر القمر (11°–13°S)</text>
+        <circle cx="67" cy="46" r="6" fill="#059669" />
+        <circle cx="89" cy="54" r="4.5" fill="#059669" />
       </g>
 
       {/* Water & Wing Captions */}
-      <text x="380" y="72" fill="#f0f9ff" fontSize="14" fontWeight="800">البحر المتوسط</text>
-      <text x="115" y="340" fill="#f0f9ff" fontSize="13" fontWeight="800">المحيط الأطلسي</text>
-      <text x="795" y="352" fill="#f0f9ff" fontSize="13" fontWeight="800">بحر العرب والمحيط الهندي</text>
-      <text x="345" y="255" fill="#14532d" fontSize="12.5" fontWeight="700" paintOrder="stroke" stroke="#ffffff" strokeWidth="2.5">
+      <text x="380" y="72" textAnchor="middle" fill="#f0f9ff" fontSize="14" fontWeight="800">البحر المتوسط</text>
+      <text x="115" y="340" textAnchor="middle" fill="#f0f9ff" fontSize="13" fontWeight="800">المحيط الأطلسي</text>
+      <text x="795" y="352" textAnchor="middle" fill="#f0f9ff" fontSize="13" fontWeight="800">بحر العرب والمحيط الهندي</text>
+      <text x="345" y="255" textAnchor="middle" fill="#14532d" fontSize="12.5" fontWeight="700" paintOrder="stroke" stroke="#ffffff" strokeWidth="2.5">
         الجناح الأفريقي (71% مساحة · 61% سكان)
       </text>
-      <text x="740" y="295" fill="#14532d" fontSize="11.5" fontWeight="700" paintOrder="stroke" stroke="#ffffff" strokeWidth="2.5">
+      <text x="740" y="295" textAnchor="middle" fill="#14532d" fontSize="11.5" fontWeight="700" paintOrder="stroke" stroke="#ffffff" strokeWidth="2.5">
         الجناح الآسيوي (29% مساحة)
       </text>
 

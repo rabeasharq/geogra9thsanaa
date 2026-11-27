@@ -625,8 +625,11 @@ export const MapDrawingLab: React.FC<MapDrawingLabProps> = ({ initialScope, onGo
                   <>
                     <polygon points={ARAB_AFRICA_PTS} fill="#ecfdf5" stroke="#065f46" strokeWidth="1.8" />
                     <polygon points={ARAB_ASIA_PTS} fill="#f0fdf4" stroke="#065f46" strokeWidth="1.8" />
-                    <g transform="translate(795, 442)">
-                      <rect width="155" height="96" rx="8" fill="#ffffff" stroke="#0369a1" strokeWidth="1.2" />
+                    <g transform="translate(790, 442)">
+                      <rect width="166" height="96" rx="8" fill="#ffffff" stroke="#0369a1" strokeWidth="1.2" />
+                      <text x="83" y="21" textAnchor="middle" fill="#334155" fontSize="10" fontWeight="700">
+                        إطار جزر القمر
+                      </text>
                     </g>
                   </>
                 )}

@@ -156,7 +156,7 @@ export const DetailedTextbookMapSvg: React.FC<DetailedTextbookMapSvgProps> = ({
                   strokeDasharray="5 5"
                   opacity="0.7"
                 />
-                <text x="50" y={eq.y - 6} fill={printFriendly ? '#0c4a6e' : '#ffffff'} fontSize="10.5" fontWeight="700">
+                <text x="145" y={eq.y - 6} textAnchor="middle" fill={printFriendly ? '#0c4a6e' : '#ffffff'} fontSize="10.5" fontWeight="700">
                   خط الاستواء 0°
                 </text>
                 <line
@@ -169,8 +169,9 @@ export const DetailedTextbookMapSvg: React.FC<DetailedTextbookMapSvgProps> = ({
                   opacity="0.75"
                 />
                 <text
-                  x="50"
+                  x="175"
                   y={cancer.y - 6}
+                  textAnchor="middle"
                   fill={printFriendly ? '#92400e' : '#fef3c7'}
                   fontSize="10.5"
                   fontWeight="700"
@@ -182,13 +183,13 @@ export const DetailedTextbookMapSvg: React.FC<DetailedTextbookMapSvgProps> = ({
           })()}
           <polygon points={ARAB_AFRICA_PTS} fill={`url(#${arabGradId})`} stroke="#065f46" strokeWidth="1.8" />
           <polygon points={ARAB_ASIA_PTS} fill="#bbf7d0" stroke="#065f46" strokeWidth="1.8" />
-          <g transform="translate(795, 442)">
-            <rect width="155" height="96" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#0369a1" />
-            <text x="12" y="21" fill="#0f172a" fontSize="10" fontWeight="700">
+          <g transform="translate(790, 442)">
+            <rect width="166" height="96" rx="8" fill="#ffffff" fillOpacity="0.95" stroke="#0369a1" />
+            <text x="83" y="21" textAnchor="middle" fill="#0f172a" fontSize="10" fontWeight="700">
               إطار جزر القمر (11°–13°S)
             </text>
-            <circle cx="62" cy="46" r="6" fill="#059669" />
-            <circle cx="84" cy="54" r="4.5" fill="#059669" />
+            <circle cx="67" cy="46" r="6" fill="#059669" />
+            <circle cx="89" cy="54" r="4.5" fill="#059669" />
           </g>
         </>
       )}
@@ -296,9 +297,9 @@ export const BlankPracticeMapSvg: React.FC<BlankPracticeMapSvgProps> = ({ templa
         <>
           <polygon points={ARAB_AFRICA_PTS} fill="#ffffff" stroke="#0f172a" strokeWidth="1.8" />
           <polygon points={ARAB_ASIA_PTS} fill="#ffffff" stroke="#0f172a" strokeWidth="1.8" />
-          <g transform="translate(795, 442)">
-            <rect width="155" height="96" rx="8" fill="#ffffff" stroke="#475569" strokeWidth="1.2" />
-            <text x="14" y="22" fill="#334155" fontSize="10" fontWeight="700">
+          <g transform="translate(790, 442)">
+            <rect width="166" height="96" rx="8" fill="#ffffff" stroke="#475569" strokeWidth="1.2" />
+            <text x="83" y="22" textAnchor="middle" fill="#334155" fontSize="10" fontWeight="700">
               جزر القمر
             </text>
           </g>
